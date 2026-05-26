@@ -1,183 +1,176 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>OAuth 2 Response Types and Code Exchange</title>
-  <link rel="stylesheet" href="../../assets/presentation.css">
-</head>
-<body>
-  <main class="deck" data-deck="oauth2-response-types" data-title="OAuth 2 Response Types and Code Exchange">
-    <section class="slide" aria-label="OAuth 2 Response Types and Code Exchange" data-slide="1">
-      <div class="slide-content">
-        <div class="slide-title">
-          <h1>OAuth 2 Response Types and Code Exchange</h1>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>OAuth 2 Response Types and Code Exchange</title>
+    <link rel="stylesheet" href="../../assets/presentation.css" />
+  </head>
+  <body>
+    <main class="deck" data-deck="oauth2-response-types" data-title="OAuth 2 Response Types and Code Exchange">
+      <section class="slide" aria-label="OAuth 2 Response Types and Code Exchange" data-slide="1">
+        <div class="slide-content">
+          <div class="slide-title">
+            <h1>OAuth 2 Response Types and Code Exchange</h1>
+          </div>
+          <div class="slide-body">
+            <p>Response types decide what returns from <code>/authorize</code>.</p>
+            <ul>
+              <li><code>code</code> starts the authorization code flow</li>
+              <li><code>token</code> is the legacy implicit flow</li>
+              <li>Client authentication depends on client type</li>
+              <li>The code exchange is the main security checkpoint</li>
+            </ul>
+            <p>
+              <a href="https://www.rfc-editor.org/info/rfc6749">RFC 6749</a> ·
+              <a href="https://www.rfc-editor.org/info/rfc7636">RFC 7636</a> ·
+              <a href="https://www.rfc-editor.org/info/rfc7523">RFC 7523</a> ·
+              <a href="https://www.rfc-editor.org/info/rfc9700">RFC 9700</a>
+            </p>
+          </div>
         </div>
-        <div class="slide-body">
-          <p>Response types decide what returns from <code>/authorize</code>.</p>
-<ul>
-<li><code>code</code> starts the authorization code flow</li>
-<li><code>token</code> is the legacy implicit flow</li>
-<li>Client authentication depends on client type</li>
-<li>The code exchange is the main security checkpoint</li>
-</ul>
-<p><a href="https://www.rfc-editor.org/info/rfc6749">RFC 6749</a> · <a href="https://www.rfc-editor.org/info/rfc7636">RFC 7636</a> · <a href="https://www.rfc-editor.org/info/rfc7523">RFC 7523</a> · <a href="https://www.rfc-editor.org/info/rfc9700">RFC 9700</a></p>
-        </div>
-      </div>
-    </section>
-<section class="slide" aria-label="responsetype is a contract" data-slide="2">
-      <div class="slide-content">
-        <div class="slide-title">
-          <h2><code>response_type</code> is a contract</h2>
-        </div>
-        <div class="slide-body">
-          <p>It tells the authorization server what kind of result the client expects.</p>
-<pre><code class="language-http">GET /authorize?
+      </section>
+      <section class="slide" aria-label="responsetype is a contract" data-slide="2">
+        <div class="slide-content">
+          <div class="slide-title">
+            <h2><code>response_type</code> is a contract</h2>
+          </div>
+          <div class="slide-body">
+            <p>It tells the authorization server what kind of result the client expects.</p>
+            <pre><code class="language-http">GET /authorize?
   response_type=code&amp;
   client_id=web-client&amp;
   redirect_uri=https%3A%2F%2Fclient.example%2Fcb
 </code></pre>
+          </div>
         </div>
-      </div>
-    </section>
-<section class="slide" aria-label="responsetype=code" data-slide="3">
-      <div class="slide-content">
-        <div class="slide-title">
-          <h2><code>response_type=code</code></h2>
-        </div>
-        <div class="slide-body">
-          <p>The browser receives an authorization code.</p>
-<pre><code class="language-http">HTTP/1.1 302 Found
+      </section>
+      <section class="slide" aria-label="responsetype=code" data-slide="3">
+        <div class="slide-content">
+          <div class="slide-title">
+            <h2><code>response_type=code</code></h2>
+          </div>
+          <div class="slide-body">
+            <p>The browser receives an authorization code.</p>
+            <pre><code class="language-http">HTTP/1.1 302 Found
 Location: https://client.example/cb?
   code=SplxlOBeZQQYbYS6WxSbIA&amp;
   state=af0ifjsldkj
 </code></pre>
+          </div>
         </div>
-      </div>
-    </section>
-<section class="slide" aria-label="Code flow separates channels" data-slide="4">
-      <div class="slide-content">
-        <div class="slide-title">
-          <h2>Code flow separates channels</h2>
+      </section>
+      <section class="slide" aria-label="Code flow separates channels" data-slide="4">
+        <div class="slide-content">
+          <div class="slide-title">
+            <h2>Code flow separates channels</h2>
+          </div>
+          <div class="slide-body">
+            <div class="cols">
+              <div class="callout">
+                <h3>Front channel</h3>
+                <p>Browser redirect carries the code.</p>
+              </div>
+
+              <div class="callout">
+                <h3>Back channel</h3>
+                <p>Client trades the code for tokens.</p>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="slide-body">
-          <div class="cols">
-
-<div class="callout">
-
-<h3>Front channel</h3>
-<p>Browser redirect carries the code.</p>
-</div>
-
-<div class="callout">
-
-<h3>Back channel</h3>
-<p>Client trades the code for tokens.</p>
-</div>
-
-</div>
-        </div>
-      </div>
-    </section>
-<section class="slide" aria-label="responsetype=token" data-slide="5">
-      <div class="slide-content">
-        <div class="slide-title">
-          <h2><code>response_type=token</code></h2>
-        </div>
-        <div class="slide-body">
-          <p>Implicit flow returns an access token from <code>/authorize</code>.</p>
-<pre><code class="language-http">HTTP/1.1 302 Found
+      </section>
+      <section class="slide" aria-label="responsetype=token" data-slide="5">
+        <div class="slide-content">
+          <div class="slide-title">
+            <h2><code>response_type=token</code></h2>
+          </div>
+          <div class="slide-body">
+            <p>Implicit flow returns an access token from <code>/authorize</code>.</p>
+            <pre><code class="language-http">HTTP/1.1 302 Found
 Location: https://client.example/cb#
   access_token=2YotnFZFEjr1zCsicMWpAA&amp;
   token_type=Bearer&amp;
   expires_in=3600&amp;
   state=af0ifjsldkj
 </code></pre>
+          </div>
         </div>
-      </div>
-    </section>
-<section class="slide" aria-label="Code versus implicit" data-slide="6">
-      <div class="slide-content">
-        <div class="slide-title">
-          <h2>Code versus implicit</h2>
+      </section>
+      <section class="slide" aria-label="Code versus implicit" data-slide="6">
+        <div class="slide-content">
+          <div class="slide-title">
+            <h2>Code versus implicit</h2>
+          </div>
+          <div class="slide-body">
+            <div class="cols">
+              <div>
+                <h3>Code flow</h3>
+                <ul>
+                  <li>Code in redirect</li>
+                  <li>Tokens from <code>/token</code></li>
+                  <li>Can authenticate client</li>
+                  <li>Works with PKCE</li>
+                </ul>
+              </div>
+
+              <div>
+                <h3>Implicit flow</h3>
+                <ul>
+                  <li>Token in redirect</li>
+                  <li>No code exchange</li>
+                  <li>No client authentication</li>
+                  <li>Legacy browser pattern</li>
+                </ul>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="slide-body">
-          <div class="cols">
-
-<div>
-
-<h3>Code flow</h3>
-<ul>
-<li>Code in redirect</li>
-<li>Tokens from <code>/token</code></li>
-<li>Can authenticate client</li>
-<li>Works with PKCE</li>
-</ul>
-</div>
-
-<div>
-
-<h3>Implicit flow</h3>
-<ul>
-<li>Token in redirect</li>
-<li>No code exchange</li>
-<li>No client authentication</li>
-<li>Legacy browser pattern</li>
-</ul>
-</div>
-
-</div>
+      </section>
+      <section class="slide" aria-label="Why implicit faded" data-slide="7">
+        <div class="slide-content">
+          <div class="slide-title">
+            <h2>Why implicit faded</h2>
+          </div>
+          <div class="slide-body">
+            <p>The token appears where browsers are weakest.</p>
+            <ul>
+              <li>URL handling</li>
+              <li>JavaScript exposure</li>
+              <li>Browser history</li>
+              <li>Redirect and referrer mistakes</li>
+            </ul>
+          </div>
         </div>
-      </div>
-    </section>
-<section class="slide" aria-label="Why implicit faded" data-slide="7">
-      <div class="slide-content">
-        <div class="slide-title">
-          <h2>Why implicit faded</h2>
-        </div>
-        <div class="slide-body">
-          <p>The token appears where browsers are weakest.</p>
-<ul>
-<li>URL handling</li>
-<li>JavaScript exposure</li>
-<li>Browser history</li>
-<li>Redirect and referrer mistakes</li>
-</ul>
-        </div>
-      </div>
-    </section>
-<section class="slide" aria-label="Client types shape authentication" data-slide="8">
-      <div class="slide-content">
-        <div class="slide-title">
-          <h2>Client types shape authentication</h2>
-        </div>
-        <div class="slide-body">
-          <div class="cols">
+      </section>
+      <section class="slide" aria-label="Client types shape authentication" data-slide="8">
+        <div class="slide-content">
+          <div class="slide-title">
+            <h2>Client types shape authentication</h2>
+          </div>
+          <div class="slide-body">
+            <div class="cols">
+              <div class="callout">
+                <h3>Public</h3>
+                <p>Cannot keep credentials confidential.</p>
+              </div>
 
-<div class="callout">
-
-<h3>Public</h3>
-<p>Cannot keep credentials confidential.</p>
-</div>
-
-<div class="callout">
-
-<h3>Confidential</h3>
-<p>Can protect credentials or private keys.</p>
-</div>
-
-</div>
+              <div class="callout">
+                <h3>Confidential</h3>
+                <p>Can protect credentials or private keys.</p>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-    </section>
-<section class="slide" aria-label="No authentication" data-slide="9">
-      <div class="slide-content">
-        <div class="slide-title">
-          <h2>No authentication</h2>
-        </div>
-        <div class="slide-body">
-          <p>Public clients use no client secret.</p>
-<pre><code class="language-http">POST /token HTTP/1.1
+      </section>
+      <section class="slide" aria-label="No authentication" data-slide="9">
+        <div class="slide-content">
+          <div class="slide-title">
+            <h2>No authentication</h2>
+          </div>
+          <div class="slide-body">
+            <p>Public clients use no client secret.</p>
+            <pre><code class="language-http">POST /token HTTP/1.1
 Content-Type: application/x-www-form-urlencoded
 
 grant_type=authorization_code&amp;
@@ -185,33 +178,33 @@ client_id=spa-client&amp;
 code=SplxlOBeZQQYbYS6WxSbIA&amp;
 redirect_uri=https%3A%2F%2Fclient.example%2Fcb
 </code></pre>
+          </div>
         </div>
-      </div>
-    </section>
-<section class="slide" aria-label="clientsecretbasic" data-slide="10">
-      <div class="slide-content">
-        <div class="slide-title">
-          <h2><code>client_secret_basic</code></h2>
-        </div>
-        <div class="slide-body">
-          <p>The client authenticates with HTTP Basic.</p>
-<pre><code class="language-http">POST /token HTTP/1.1
+      </section>
+      <section class="slide" aria-label="clientsecretbasic" data-slide="10">
+        <div class="slide-content">
+          <div class="slide-title">
+            <h2><code>client_secret_basic</code></h2>
+          </div>
+          <div class="slide-body">
+            <p>The client authenticates with HTTP Basic.</p>
+            <pre><code class="language-http">POST /token HTTP/1.1
 Authorization: Basic d2ViLWNsaWVudDpzZWNyZXQ
 Content-Type: application/x-www-form-urlencoded
 
 grant_type=authorization_code&amp;code=SplxlOBeZQQYbYS6WxSbIA
 </code></pre>
+          </div>
         </div>
-      </div>
-    </section>
-<section class="slide" aria-label="clientsecretpost" data-slide="11">
-      <div class="slide-content">
-        <div class="slide-title">
-          <h2><code>client_secret_post</code></h2>
-        </div>
-        <div class="slide-body">
-          <p>The client sends credentials in the body.</p>
-<pre><code class="language-http">POST /token HTTP/1.1
+      </section>
+      <section class="slide" aria-label="clientsecretpost" data-slide="11">
+        <div class="slide-content">
+          <div class="slide-title">
+            <h2><code>client_secret_post</code></h2>
+          </div>
+          <div class="slide-body">
+            <p>The client sends credentials in the body.</p>
+            <pre><code class="language-http">POST /token HTTP/1.1
 Content-Type: application/x-www-form-urlencoded
 
 grant_type=authorization_code&amp;
@@ -219,61 +212,61 @@ code=SplxlOBeZQQYbYS6WxSbIA&amp;
 client_id=web-client&amp;
 client_secret=s3cr3t
 </code></pre>
+          </div>
         </div>
-      </div>
-    </section>
-<section class="slide" aria-label="JWT client authentication" data-slide="12">
-      <div class="slide-content">
-        <div class="slide-title">
-          <h2>JWT client authentication</h2>
-        </div>
-        <div class="slide-body">
-          <p>The client signs an assertion for the token endpoint.</p>
-<pre><code class="language-text">client_assertion_type =
+      </section>
+      <section class="slide" aria-label="JWT client authentication" data-slide="12">
+        <div class="slide-content">
+          <div class="slide-title">
+            <h2>JWT client authentication</h2>
+          </div>
+          <div class="slide-body">
+            <p>The client signs an assertion for the token endpoint.</p>
+            <pre><code class="language-text">client_assertion_type =
   urn:ietf:params:oauth:client-assertion-type:jwt-bearer
 
 client_assertion =
   signed JWT with iss, sub, aud, exp, jti
 </code></pre>
+          </div>
         </div>
-      </div>
-    </section>
-<section class="slide" aria-label="Authentication is registered" data-slide="13">
-      <div class="slide-content">
-        <div class="slide-title">
-          <h2>Authentication is registered</h2>
+      </section>
+      <section class="slide" aria-label="Authentication is registered" data-slide="13">
+        <div class="slide-content">
+          <div class="slide-title">
+            <h2>Authentication is registered</h2>
+          </div>
+          <div class="slide-body">
+            <p>The server should know the client&#39;s method.</p>
+            <ul>
+              <li>Public client: <code>none</code></li>
+              <li>Shared secret: <code>client_secret_basic</code> or <code>client_secret_post</code></li>
+              <li>Signed assertion: <code>private_key_jwt</code> or <code>client_secret_jwt</code></li>
+            </ul>
+          </div>
         </div>
-        <div class="slide-body">
-          <p>The server should know the client&#39;s method.</p>
-<ul>
-<li>Public client: <code>none</code></li>
-<li>Shared secret: <code>client_secret_basic</code> or <code>client_secret_post</code></li>
-<li>Signed assertion: <code>private_key_jwt</code> or <code>client_secret_jwt</code></li>
-</ul>
-        </div>
-      </div>
-    </section>
-<section class="slide" aria-label="Code exchange overview" data-slide="14">
-      <div class="slide-content">
-        <div class="slide-title">
-          <h2>Code exchange overview</h2>
-        </div>
-        <div class="slide-body">
-          <pre><code class="language-text">1. Client receives code at redirect_uri
+      </section>
+      <section class="slide" aria-label="Code exchange overview" data-slide="14">
+        <div class="slide-content">
+          <div class="slide-title">
+            <h2>Code exchange overview</h2>
+          </div>
+          <div class="slide-body">
+            <pre><code class="language-text">1. Client receives code at redirect_uri
 2. Client calls /token
 3. Server validates code and client
 4. Server issues tokens
 </code></pre>
+          </div>
         </div>
-      </div>
-    </section>
-<section class="slide" aria-label="Token request anatomy" data-slide="15">
-      <div class="slide-content">
-        <div class="slide-title">
-          <h2>Token request anatomy</h2>
-        </div>
-        <div class="slide-body">
-          <pre><code class="language-http">POST /token HTTP/1.1
+      </section>
+      <section class="slide" aria-label="Token request anatomy" data-slide="15">
+        <div class="slide-content">
+          <div class="slide-title">
+            <h2>Token request anatomy</h2>
+          </div>
+          <div class="slide-body">
+            <pre><code class="language-http">POST /token HTTP/1.1
 Content-Type: application/x-www-form-urlencoded
 Authorization: Basic ...
 
@@ -282,32 +275,32 @@ code=SplxlOBeZQQYbYS6WxSbIA&amp;
 redirect_uri=https%3A%2F%2Fclient.example%2Fcb&amp;
 code_verifier=dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk
 </code></pre>
+          </div>
         </div>
-      </div>
-    </section>
-<section class="slide" aria-label="Server validation checklist" data-slide="16">
-      <div class="slide-content">
-        <div class="slide-title">
-          <h2>Server validation checklist</h2>
+      </section>
+      <section class="slide" aria-label="Server validation checklist" data-slide="16">
+        <div class="slide-content">
+          <div class="slide-title">
+            <h2>Server validation checklist</h2>
+          </div>
+          <div class="slide-body">
+            <ul>
+              <li>Client exists and may use this grant</li>
+              <li>Client authentication matches registration</li>
+              <li>Code belongs to the client</li>
+              <li>Redirect URI matches the original request</li>
+              <li>PKCE verifier matches the stored challenge</li>
+            </ul>
+          </div>
         </div>
-        <div class="slide-body">
-          <ul>
-<li>Client exists and may use this grant</li>
-<li>Client authentication matches registration</li>
-<li>Code belongs to the client</li>
-<li>Redirect URI matches the original request</li>
-<li>PKCE verifier matches the stored challenge</li>
-</ul>
-        </div>
-      </div>
-    </section>
-<section class="slide" aria-label="Token response" data-slide="17">
-      <div class="slide-content">
-        <div class="slide-title">
-          <h2>Token response</h2>
-        </div>
-        <div class="slide-body">
-          <pre><code class="language-http">HTTP/1.1 200 OK
+      </section>
+      <section class="slide" aria-label="Token response" data-slide="17">
+        <div class="slide-content">
+          <div class="slide-title">
+            <h2>Token response</h2>
+          </div>
+          <div class="slide-body">
+            <pre><code class="language-http">HTTP/1.1 200 OK
 Content-Type: application/json
 Cache-Control: no-store
 Pragma: no-cache
@@ -319,45 +312,67 @@ Pragma: no-cache
   &quot;refresh_token&quot;: &quot;8xLOxBtZp8&quot;
 }
 </code></pre>
+          </div>
         </div>
-      </div>
-    </section>
-<section class="slide" aria-label="Error response" data-slide="18">
-      <div class="slide-content">
-        <div class="slide-title">
-          <h2>Error response</h2>
-        </div>
-        <div class="slide-body">
-          <p>Token endpoint failures are explicit.</p>
-<pre><code class="language-json">{
+      </section>
+      <section class="slide" aria-label="Error response" data-slide="18">
+        <div class="slide-content">
+          <div class="slide-title">
+            <h2>Error response</h2>
+          </div>
+          <div class="slide-body">
+            <p>Token endpoint failures are explicit.</p>
+            <pre><code class="language-json">{
   &quot;error&quot;: &quot;invalid_grant&quot;,
   &quot;error_description&quot;: &quot;authorization code is invalid&quot;
 }
 </code></pre>
+          </div>
         </div>
-      </div>
-    </section>
-<section class="slide" aria-label="The mental model" data-slide="19">
-      <div class="slide-content">
-        <div class="slide-title">
-          <h2>The mental model</h2>
+      </section>
+      <section class="slide" aria-label="The mental model" data-slide="19">
+        <div class="slide-content">
+          <div class="slide-title">
+            <h2>The mental model</h2>
+          </div>
+          <div class="slide-body">
+            <p><code>response_type</code> chooses the front-channel result.</p>
+            <p>Client authentication proves who is exchanging the grant.</p>
+            <p>The code exchange turns authorization into tokens.</p>
+          </div>
         </div>
-        <div class="slide-body">
-          <p><code>response_type</code> chooses the front-channel result.</p>
-<p>Client authentication proves who is exchanging the grant.</p>
-<p>The code exchange turns authorization into tokens.</p>
-        </div>
-      </div>
-    </section>
-  </main>
-  <div class="controls" aria-label="Presentation controls">
-    <button type="button" data-prev aria-label="Previous slide">Prev</button>
-    <span data-counter></span>
-    <button type="button" data-next aria-label="Next slide">Next</button>
-    <button type="button" data-notes aria-label="Open presenter notes">Notes</button>
-  </div>
-  <div class="progress" aria-hidden="true"><span data-progress></span></div>
-  <script type="application/json" id="notes-data">["\u003cp>This deck narrows in on the choice made by \u003ccode>response_type\u003c/code>, then follows the authorization code back to the token endpoint. Treat implicit as historical and still important for recognizing legacy systems, not as a recommended choice for new applications.\u003c/p>\n","\u003cp>The authorization server must reject unsupported or invalid response types. In core OAuth 2.0, the key values are \u003ccode>code\u003c/code> and \u003ccode>token\u003c/code>. Extensions, including OpenID Connect, add combined values, but this deck stays on OAuth first.\u003c/p>\n","\u003cp>The code is not a token. It is a short-lived grant bound to the client, redirect URI, and, in modern deployments, a PKCE challenge. The client still has to call \u003ccode>/token\u003c/code>.\u003c/p>\n","\u003cp>The split limits what the browser sees. Tokens can be issued through the token endpoint instead of being placed directly in the redirect URL. This is one reason code flow is the modern default.\u003c/p>\n","\u003cp>The fragment keeps the token out of the HTTP request to the client server, but it is still exposed to browser history, scripts running in the page, and other front-channel risks. RFC 9700 deprecates implicit-style token delivery for new designs.\u003c/p>\n","\u003cp>Do not overstate client authentication: public clients still cannot keep a secret in code flow, but the token endpoint can validate PKCE and other bindings. Confidential clients can authenticate during the exchange.\u003c/p>\n","\u003cp>Modern browsers and SPAs can use authorization code with PKCE. The original reason for implicit was that browser apps could not securely call the token endpoint; current guidance no longer treats that as sufficient justification.\u003c/p>\n","\u003cp>Native apps, SPAs, and browser-delivered code are public clients because secrets can be extracted. Server-side web apps and backend services can be confidential clients when they can protect credentials.\u003c/p>\n","\u003cp>No authentication does not mean no validation. The authorization server still validates \u003ccode>client_id\u003c/code>, redirect URI, the authorization code binding, PKCE verifier, expiration, and single use.\u003c/p>\n","\u003cp>In RFC 6749, HTTP Basic is the default style for clients issued a password. The credentials are the client identifier and client secret, encoded for the Authorization header.\u003c/p>\n","\u003cp>This is allowed by OAuth 2.0 but generally less preferred than Basic because credentials travel in request bodies that are more often logged. If used, the token endpoint must require TLS and avoid logging sensitive form fields.\u003c/p>\n","\u003cp>RFC 7523 defines JWT bearer assertions for OAuth client authentication. \u003ccode>private_key_jwt\u003c/code> uses an asymmetric signature, while \u003ccode>client_secret_jwt\u003c/code> uses a shared secret. Private-key methods reduce shared-secret exposure and are preferred in higher assurance systems.\u003c/p>\n","\u003cp>The token endpoint should not guess authentication methods dynamically. Registration metadata tells the server which method is expected. Reject requests that mix methods or present credentials where none should be used.\u003c/p>\n","\u003cp>This exchange is where the authorization server gets a direct request from the client. It can enforce client authentication, redirect URI matching, PKCE, code lifetime, and replay detection.\u003c/p>\n","\u003cp>\u003ccode>grant_type\u003c/code> selects the authorization code validation path. \u003ccode>code\u003c/code> is the grant. \u003ccode>redirect_uri\u003c/code> is required when it was included in the authorization request and is commonly enforced as a binding. \u003ccode>code_verifier\u003c/code> proves possession of the PKCE verifier.\u003c/p>\n","\u003cp>Also validate expiration, single use, issuer context, and any authorization server policy. On failure, return an OAuth error; do not partially issue tokens.\u003c/p>\n","\u003cp>Refresh token issuance is policy-driven. Public clients can receive refresh tokens in modern deployments, but the server should rotate or sender-constrain them where appropriate and apply risk-based limits.\u003c/p>\n","\u003cp>Avoid leaking too much detail. \u003ccode>invalid_grant\u003c/code> covers invalid, expired, revoked, mismatched, or already-used authorization codes. Log precise reasons server-side for detection and debugging.\u003c/p>\n","\u003cp>This bridges into the next deck: we will stop treating \u003ccode>/authorize\u003c/code> and \u003ccode>/token\u003c/code> as boxes and walk through how each endpoint should parse, validate, and reject requests.\u003c/p>\n"]</script>
-  <script src="../../assets/presentation.js"></script>
-</body>
+      </section>
+    </main>
+    <div class="controls" aria-label="Presentation controls">
+      <button type="button" data-prev aria-label="Previous slide">Prev</button>
+      <span data-counter></span>
+      <button type="button" data-next aria-label="Next slide">Next</button>
+      <button type="button" data-notes aria-label="Open presenter notes">Notes</button>
+    </div>
+    <div class="progress" aria-hidden="true"><span data-progress></span></div>
+    <script type="application/json" id="notes-data">
+      [
+        "\u003cp>This deck narrows in on the choice made by \u003ccode>response_type\u003c/code>, then follows the authorization code back to the token endpoint. Treat implicit as historical and still important for recognizing legacy systems, not as a recommended choice for new applications.\u003c/p>\n",
+        "\u003cp>The authorization server must reject unsupported or invalid response types. In core OAuth 2.0, the key values are \u003ccode>code\u003c/code> and \u003ccode>token\u003c/code>. Extensions, including OpenID Connect, add combined values, but this deck stays on OAuth first.\u003c/p>\n",
+        "\u003cp>The code is not a token. It is a short-lived grant bound to the client, redirect URI, and, in modern deployments, a PKCE challenge. The client still has to call \u003ccode>/token\u003c/code>.\u003c/p>\n",
+        "\u003cp>The split limits what the browser sees. Tokens can be issued through the token endpoint instead of being placed directly in the redirect URL. This is one reason code flow is the modern default.\u003c/p>\n",
+        "\u003cp>The fragment keeps the token out of the HTTP request to the client server, but it is still exposed to browser history, scripts running in the page, and other front-channel risks. RFC 9700 deprecates implicit-style token delivery for new designs.\u003c/p>\n",
+        "\u003cp>Do not overstate client authentication: public clients still cannot keep a secret in code flow, but the token endpoint can validate PKCE and other bindings. Confidential clients can authenticate during the exchange.\u003c/p>\n",
+        "\u003cp>Modern browsers and SPAs can use authorization code with PKCE. The original reason for implicit was that browser apps could not securely call the token endpoint; current guidance no longer treats that as sufficient justification.\u003c/p>\n",
+        "\u003cp>Native apps, SPAs, and browser-delivered code are public clients because secrets can be extracted. Server-side web apps and backend services can be confidential clients when they can protect credentials.\u003c/p>\n",
+        "\u003cp>No authentication does not mean no validation. The authorization server still validates \u003ccode>client_id\u003c/code>, redirect URI, the authorization code binding, PKCE verifier, expiration, and single use.\u003c/p>\n",
+        "\u003cp>In RFC 6749, HTTP Basic is the default style for clients issued a password. The credentials are the client identifier and client secret, encoded for the Authorization header.\u003c/p>\n",
+        "\u003cp>This is allowed by OAuth 2.0 but generally less preferred than Basic because credentials travel in request bodies that are more often logged. If used, the token endpoint must require TLS and avoid logging sensitive form fields.\u003c/p>\n",
+        "\u003cp>RFC 7523 defines JWT bearer assertions for OAuth client authentication. \u003ccode>private_key_jwt\u003c/code> uses an asymmetric signature, while \u003ccode>client_secret_jwt\u003c/code> uses a shared secret. Private-key methods reduce shared-secret exposure and are preferred in higher assurance systems.\u003c/p>\n",
+        "\u003cp>The token endpoint should not guess authentication methods dynamically. Registration metadata tells the server which method is expected. Reject requests that mix methods or present credentials where none should be used.\u003c/p>\n",
+        "\u003cp>This exchange is where the authorization server gets a direct request from the client. It can enforce client authentication, redirect URI matching, PKCE, code lifetime, and replay detection.\u003c/p>\n",
+        "\u003cp>\u003ccode>grant_type\u003c/code> selects the authorization code validation path. \u003ccode>code\u003c/code> is the grant. \u003ccode>redirect_uri\u003c/code> is required when it was included in the authorization request and is commonly enforced as a binding. \u003ccode>code_verifier\u003c/code> proves possession of the PKCE verifier.\u003c/p>\n",
+        "\u003cp>Also validate expiration, single use, issuer context, and any authorization server policy. On failure, return an OAuth error; do not partially issue tokens.\u003c/p>\n",
+        "\u003cp>Refresh token issuance is policy-driven. Public clients can receive refresh tokens in modern deployments, but the server should rotate or sender-constrain them where appropriate and apply risk-based limits.\u003c/p>\n",
+        "\u003cp>Avoid leaking too much detail. \u003ccode>invalid_grant\u003c/code> covers invalid, expired, revoked, mismatched, or already-used authorization codes. Log precise reasons server-side for detection and debugging.\u003c/p>\n",
+        "\u003cp>This bridges into the next deck: we will stop treating \u003ccode>/authorize\u003c/code> and \u003ccode>/token\u003c/code> as boxes and walk through how each endpoint should parse, validate, and reject requests.\u003c/p>\n"
+      ]
+    </script>
+    <script src="../../assets/presentation.js"></script>
+  </body>
 </html>
