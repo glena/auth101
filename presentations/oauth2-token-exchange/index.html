@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OAuth 2 Token Exchange</title>
+  <link rel="stylesheet" href="../../assets/presentation.css">
+</head>
+<body>
+  <main class="deck" data-deck="oauth2-token-exchange" data-title="OAuth 2 Token Exchange">
+    <section class="slide" aria-label="OAuth 2 Token Exchange" data-slide="1">
+      <div class="slide-content">
+        <div class="slide-title">
+          <h1>OAuth 2 Token Exchange</h1>
+        </div>
+        <div class="slide-body">
+          <p>RFC 8693 defines an extension grant for trading one security token for another.</p>
+<ul>
+<li>Purpose and boundaries</li>
+<li>Main use cases</li>
+<li><code>/token</code> request payload</li>
+<li>Parameter-by-parameter meaning</li>
+</ul>
+<p><a href="https://www.rfc-editor.org/info/rfc8693">RFC 8693</a> · <a href="https://www.rfc-editor.org/info/rfc6749">RFC 6749</a> · <a href="https://www.rfc-editor.org/info/rfc8707">RFC 8707</a></p>
+        </div>
+      </div>
+    </section>
+<section class="slide" aria-label="Purpose" data-slide="2">
+      <div class="slide-content">
+        <div class="slide-title">
+          <h2>Purpose</h2>
+        </div>
+        <div class="slide-body">
+          <p>Token exchange lets a client ask the authorization server for a token better suited to the next hop.</p>
+<pre><code class="language-text">current token + target context -&gt; new token
+</code></pre>
+        </div>
+      </div>
+    </section>
+<section class="slide" aria-label="Extension grant" data-slide="3">
+      <div class="slide-content">
+        <div class="slide-title">
+          <h2>Extension grant</h2>
+        </div>
+        <div class="slide-body">
+          <p>Token exchange is a <code>/token</code> request.</p>
+<pre><code class="language-text">grant_type = urn:ietf:params:oauth:grant-type:token-exchange
+</code></pre>
+<ul>
+<li>Uses normal OAuth client authentication</li>
+<li>Uses form-encoded token endpoint input</li>
+<li>Returns a normal OAuth token response</li>
+</ul>
+        </div>
+      </div>
+    </section>
+<section class="slide" aria-label="Main use cases" data-slide="4">
+      <div class="slide-content">
+        <div class="slide-title">
+          <h2>Main use cases</h2>
+        </div>
+        <div class="slide-body">
+          <ul>
+<li>Service-to-service downstream calls</li>
+<li>Narrowing broad frontend tokens</li>
+<li>Changing audience or resource</li>
+<li>Changing token format</li>
+<li>Delegation or impersonation</li>
+</ul>
+        </div>
+      </div>
+    </section>
+<section class="slide" aria-label="Downstream API example" data-slide="5">
+      <div class="slide-content">
+        <div class="slide-title">
+          <h2>Downstream API example</h2>
+        </div>
+        <div class="slide-body">
+          <pre><code class="language-text">user -&gt; frontend -&gt; orders API -&gt; invoices API
+</code></pre>
+<p>The orders API exchanges its incoming token for an invoices token.</p>
+<ul>
+<li>Audience: invoices API</li>
+<li>Scope: <code>invoices.read</code></li>
+<li>Lifetime: short</li>
+</ul>
+        </div>
+      </div>
+    </section>
+<section class="slide" aria-label="Delegation and impersonation" data-slide="6">
+      <div class="slide-content">
+        <div class="slide-title">
+          <h2>Delegation and impersonation</h2>
+        </div>
+        <div class="slide-body">
+          <p>Token exchange can express two different relationships.</p>
+<table>
+<thead>
+<tr>
+<th>Relationship</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Delegation</td>
+<td>Actor acts for the subject</td>
+</tr>
+<tr>
+<td>Impersonation</td>
+<td>Actor is treated as the subject</td>
+</tr>
+</tbody></table>
+        </div>
+      </div>
+    </section>
+<section class="slide" aria-label="Request shape" data-slide="7">
+      <div class="slide-content">
+        <div class="slide-title">
+          <h2>Request shape</h2>
+        </div>
+        <div class="slide-body">
+          <pre><code class="language-http">POST /token HTTP/1.1
+Content-Type: application/x-www-form-urlencoded
+Authorization: Basic ...
+
+grant_type=urn:ietf:params:oauth:grant-type:token-exchange&amp;
+subject_token=eyJ...&amp;
+subject_token_type=urn:ietf:params:oauth:token-type:access_token&amp;
+resource=https%3A%2F%2Fapi.example%2Finvoices&amp;
+audience=invoices-api&amp;
+scope=invoices.read&amp;
+requested_token_type=urn:ietf:params:oauth:token-type:access_token
+</code></pre>
+        </div>
+      </div>
+    </section>
+<section class="slide" aria-label="Required parameters" data-slide="8">
+      <div class="slide-content">
+        <div class="slide-title">
+          <h2>Required parameters</h2>
+        </div>
+        <div class="slide-body">
+          <table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>grant_type</code></td>
+<td>Selects RFC 8693 token exchange</td>
+</tr>
+<tr>
+<td><code>subject_token</code></td>
+<td>Token being exchanged</td>
+</tr>
+<tr>
+<td><code>subject_token_type</code></td>
+<td>Type of <code>subject_token</code></td>
+</tr>
+</tbody></table>
+        </div>
+      </div>
+    </section>
+<section class="slide" aria-label="Target parameters" data-slide="9">
+      <div class="slide-content">
+        <div class="slide-title">
+          <h2>Target parameters</h2>
+        </div>
+        <div class="slide-body">
+          <table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>resource</code></td>
+<td>Target resource URI</td>
+</tr>
+<tr>
+<td><code>audience</code></td>
+<td>Logical target service</td>
+</tr>
+<tr>
+<td><code>scope</code></td>
+<td>Requested permissions</td>
+</tr>
+</tbody></table>
+        </div>
+      </div>
+    </section>
+<section class="slide" aria-label="Output token parameter" data-slide="10">
+      <div class="slide-content">
+        <div class="slide-title">
+          <h2>Output token parameter</h2>
+        </div>
+        <div class="slide-body">
+          <p><code>requested_token_type</code> asks what kind of token should be issued.</p>
+<pre><code class="language-text">urn:ietf:params:oauth:token-type:access_token
+urn:ietf:params:oauth:token-type:refresh_token
+urn:ietf:params:oauth:token-type:id_token
+urn:ietf:params:oauth:token-type:jwt
+urn:ietf:params:oauth:token-type:saml2
+</code></pre>
+        </div>
+      </div>
+    </section>
+<section class="slide" aria-label="Actor parameters" data-slide="11">
+      <div class="slide-content">
+        <div class="slide-title">
+          <h2>Actor parameters</h2>
+        </div>
+        <div class="slide-body">
+          <p>Use actor parameters when the issued token needs delegation context.</p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>actor_token</code></td>
+<td>Token representing the acting party</td>
+</tr>
+<tr>
+<td><code>actor_token_type</code></td>
+<td>Type of <code>actor_token</code></td>
+</tr>
+</tbody></table>
+        </div>
+      </div>
+    </section>
+<section class="slide" aria-label="Validation model" data-slide="12">
+      <div class="slide-content">
+        <div class="slide-title">
+          <h2>Validation model</h2>
+        </div>
+        <div class="slide-body">
+          <p>The authorization server validates:</p>
+<ul>
+<li>Client authentication and policy</li>
+<li>Subject token type and trust</li>
+<li>Actor token type and trust, when present</li>
+<li>Requested target, scope, and token type</li>
+</ul>
+        </div>
+      </div>
+    </section>
+<section class="slide" aria-label="Token response" data-slide="13">
+      <div class="slide-content">
+        <div class="slide-title">
+          <h2>Token response</h2>
+        </div>
+        <div class="slide-body">
+          <p>Successful responses use normal OAuth token response fields plus token exchange context.</p>
+<pre><code class="language-json">{
+  &quot;access_token&quot;: &quot;eyJ...&quot;,
+  &quot;issued_token_type&quot;: &quot;urn:ietf:params:oauth:token-type:access_token&quot;,
+  &quot;token_type&quot;: &quot;Bearer&quot;,
+  &quot;expires_in&quot;: 300,
+  &quot;scope&quot;: &quot;invoices.read&quot;
+}
+</code></pre>
+        </div>
+      </div>
+    </section>
+  </main>
+  <div class="controls" aria-label="Presentation controls">
+    <button type="button" data-prev aria-label="Previous slide">Prev</button>
+    <span data-counter></span>
+    <button type="button" data-next aria-label="Next slide">Next</button>
+    <button type="button" data-notes aria-label="Open presenter notes">Notes</button>
+  </div>
+  <div class="progress" aria-hidden="true"><span data-progress></span></div>
+  <script type="application/json" id="notes-data">["\u003cp>Keep this deck scoped to token exchange as standardized by RFC 8693. RFC 6749 supplies the token endpoint and extension grant model. RFC 8707 gives additional background for resource indicators, which overlap with the \u003ccode>resource\u003c/code> parameter used by token exchange.\u003c/p>\n","\u003cp>The core idea is not &quot;refresh this token&quot; or &quot;mint anything from anything.&quot; The client presents a security token, the authorization server validates it, applies policy, and may issue a new token with a different audience, scope, token type, or subject/actor relationship.\u003c/p>\n","\u003cp>Treat this as another token endpoint grant type. The authorization server still authenticates the client according to registration and policy. The server then validates the presented token or tokens according to the declared token type and local trust rules.\u003c/p>\n","\u003cp>Use cases often show up in distributed systems. A resource server receives a token for itself, then needs a token suitable for a backend service. A gateway may exchange a user token for a short-lived, narrower token. A system boundary may need a JWT, SAML assertion, or opaque access token depending on what the next service accepts.\u003c/p>\n","\u003cp>This avoids sending a token intended for the orders API to the invoices API. It also lets the authorization server apply policy between services: whether orders may call invoices, which user authority may be carried forward, and how narrow the issued token should be.\u003c/p>\n","\u003cp>In delegation, the issued token can preserve both the subject and the actor. In impersonation, the token is interpreted as the subject in the target context. Do not blur these in implementation or logging; audit trails and authorization decisions depend on the distinction.\u003c/p>\n","\u003cp>The request body is \u003ccode>application/x-www-form-urlencoded\u003c/code>, not JSON. The client authentication shown with Basic is only one possible method; the registered client method controls what is valid.\u003c/p>\n","\u003cp>\u003ccode>grant_type\u003c/code> must be exactly \u003ccode>urn:ietf:params:oauth:grant-type:token-exchange\u003c/code>. \u003ccode>subject_token\u003c/code> represents the identity or authority on behalf of which the request is made. \u003ccode>subject_token_type\u003c/code> tells the authorization server how to validate and interpret the presented token, for example as an access token, refresh token, ID token, JWT, or SAML assertion.\u003c/p>\n","\u003cp>All three are optional. \u003ccode>resource\u003c/code> can appear more than once and uses absolute URI values without fragments. \u003ccode>audience\u003c/code> can appear more than once and names target services using values meaningful to the authorization server. \u003ccode>scope\u003c/code> is a space-delimited OAuth scope list for the token being requested. Broad combinations can be rejected with \u003ccode>invalid_target\u003c/code>.\u003c/p>\n","\u003cp>This parameter is optional. If omitted, the authorization server chooses the issued token type based on policy and the requested target. Asking for a token type is not a guarantee that the server will issue it.\u003c/p>\n","\u003cp>\u003ccode>actor_token\u003c/code> is optional. \u003ccode>actor_token_type\u003c/code> is required when \u003ccode>actor_token\u003c/code> is present and must not be sent otherwise. The authorization server validates both the subject and actor tokens and decides whether the requested delegation is allowed.\u003c/p>\n","\u003cp>RFC 8693 leaves token-specific validation and trust models to deployments. The important implementation point is deterministic policy: which clients may exchange which tokens, for which targets, under which subject and actor relationships.\u003c/p>\n","\u003cp>\u003ccode>issued_token_type\u003c/code> tells the client what kind of token was actually issued. \u003ccode>token_type\u003c/code> describes how to use the token, such as Bearer. As with other token responses, return cache-prevention headers and avoid logging raw tokens.\u003c/p>\n"]</script>
+  <script src="../../assets/presentation.js"></script>
+</body>
+</html>
