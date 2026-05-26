@@ -29,9 +29,27 @@ Frame this as an introduction to protocol mechanics, not a security deep dive. O
 
 ---
 
+## Key terminology
+
+| Term | Meaning |
+|---|---|
+| **Resource owner** | The user who owns the data |
+| **Client** | The application requesting access |
+| **Authorization server** | Issues tokens after authenticating the owner |
+| **Resource server** | Hosts the protected data; accepts tokens |
+| **Scope** | A named permission the client is asking for |
+| **Access token** | Short-lived credential used to call the resource server |
+| **Refresh token** | Long-lived credential used to get new access tokens |
+
+::: notes
+These terms come directly from RFC 6749 and are used consistently throughout the spec. Being precise here pays off when reading actual requests and responses — each parameter name maps to one of these roles.
+:::
+
+---
+
 ## Why OAuth exists
 
-OAuth lets a client get limited access without handling the resource owner's password.
+OAuth lets a client access data and perform operations on a resource owner's behalf — without the client ever handling the resource owner's password.
 
 ```text
 resource owner -> authorization server -> client -> resource server
@@ -51,7 +69,7 @@ Keep the vocabulary precise. The resource owner is usually the user. The client 
 
 ### `/authorize`
 
-Browser-facing request that asks for authorization.
+Browser-facing request that asks for authorization — these are often called **interactive flows**.
 
 </div>
 
@@ -90,35 +108,149 @@ The authorization server authenticates the user however it chooses, asks for con
 
 ---
 
-## Authorize request: routing
+## Authorize request: `client_id`
 
-- `client_id` identifies the client registration.
-- `redirect_uri` tells the server where to send the result.
+`client_id` identifies the client registration.
+
+<pre><code>GET /authorize?
+  <mark>client_id=calendar-web</mark>&amp;
+  response_type=code&amp;
+  redirect_uri=https%3A%2F%2Fclient.example%2Fcallback&amp;
+  scope=calendar.read&amp;
+  state=7b3c...</code></pre>
 
 ::: notes
-The authorization server must know the client and validate the redirect URI. Exact redirect URI validation is a major security control because loose matching can lead to authorization code or token leakage.
+The client_id maps to a registered client entry that includes the allowed redirect URIs, grant types, and other configuration.
 :::
 
 ---
 
-## Authorize request: permissions and binding
+## Authorize request: `redirect_uri`
 
-- `scope` describes the access the client is requesting.
-- `state` is an opaque client value returned unchanged in the response.
+`redirect_uri` tells the server where to send the result.
+
+<pre><code>GET /authorize?
+  client_id=calendar-web&amp;
+  response_type=code&amp;
+  <mark>redirect_uri=https%3A%2F%2Fclient.example%2Fcallback</mark>&amp;
+  scope=calendar.read&amp;
+  state=7b3c...</code></pre>
 
 ::: notes
-Scope is a request for a bounded permission set. The authorization server can grant less than requested. State is commonly used to bind the authorization response to the browser session and mitigate CSRF. State is not a substitute for redirect URI validation or PKCE.
+Exact redirect URI validation is a major security control because loose matching can lead to authorization code or token leakage.
 :::
 
 ---
 
-## Authorize request: response shape
+## Authorize request: `scope`
 
-- `response_type` selects what comes back from `/authorize`.
-- `response_mode` selects how parameters are encoded in the response.
+`scope` describes the access the client is requesting.
+
+<pre><code>GET /authorize?
+  client_id=calendar-web&amp;
+  response_type=code&amp;
+  redirect_uri=https%3A%2F%2Fclient.example%2Fcallback&amp;
+  <mark>scope=calendar.read</mark>&amp;
+  state=7b3c...</code></pre>
 
 ::: notes
-In core OAuth 2.0, `response_type=code` returns an authorization code and `response_type=token` was used by the implicit flow. Modern guidance favors authorization code with PKCE and deprecates implicit-style token delivery in the browser. `response_mode` comes from extension specifications; common modes include query, fragment, and form_post.
+Scope is a request for a bounded permission set. The authorization server can grant less than requested.
+:::
+
+---
+
+## Authorize request: `state`
+
+`state` is an opaque client value returned unchanged in the response.
+
+<pre><code>GET /authorize?
+  client_id=calendar-web&amp;
+  response_type=code&amp;
+  redirect_uri=https%3A%2F%2Fclient.example%2Fcallback&amp;
+  scope=calendar.read&amp;
+  <mark>state=7b3c...</mark></code></pre>
+
+::: notes
+State binds the authorization response to the browser session, mitigating CSRF. It is not a substitute for redirect URI validation or PKCE.
+:::
+
+---
+
+## Authorize request: `response_type`
+
+`response_type` selects what comes back from `/authorize`.
+
+<pre><code>GET /authorize?
+  client_id=calendar-web&amp;
+  <mark>response_type=code</mark>&amp;
+  redirect_uri=https%3A%2F%2Fclient.example%2Fcallback&amp;
+  scope=calendar.read&amp;
+  state=7b3c...</code></pre>
+
+::: notes
+`response_type=code` returns an authorization code. `response_type=token` was used by the now-deprecated implicit flow. Modern guidance favors authorization code with PKCE.
+:::
+
+---
+
+## `response_type` values
+
+| Value | What you get | Notes |
+|---|---|---|
+| `code` | Authorization code | Standard; exchange it at `/token` |
+| `token` | Access token directly | Implicit flow — deprecated |
+
+::: notes
+`code` is the only value recommended by current guidance. The implicit `token` value delivers the access token directly in the URL fragment, exposing it to browser history and referrer headers. Extension specifications such as OpenID Connect define additional values.
+:::
+
+---
+
+## Authorize request: `response_mode`
+
+`response_mode` selects how parameters are encoded in the response.
+
+<pre><code>GET /authorize?
+  client_id=calendar-web&amp;
+  response_type=code&amp;
+  redirect_uri=https%3A%2F%2Fclient.example%2Fcallback&amp;
+  scope=calendar.read&amp;
+  state=7b3c...&amp;
+  <mark>response_mode=query</mark></code></pre>
+
+::: notes
+`response_mode` comes from extension specifications. Common modes are query (params in URL), fragment (hash), and form_post (HTTP POST body).
+:::
+
+---
+
+## `response_mode` values
+
+| Value | How the response is delivered |
+|---|---|
+| `query` | Parameters appended to the redirect URI as a query string |
+| `fragment` | Parameters appended to the redirect URI as a URL fragment |
+| `form_post` | Parameters sent as an HTTP POST body to the redirect URI |
+
+::: notes
+`query` is the default for `response_type=code` and keeps the authorization code in the URL query string. `fragment` was the default for the implicit flow — the token lands in the hash, which the browser does not send to the server but is still readable by page scripts. `form_post` avoids exposing parameters in the URL entirely; the authorization server POSTs the response to the redirect URI, which makes it suitable when the response payload is large or must not appear in logs.
+:::
+
+---
+
+## Authorize request: `prompt`
+
+`prompt` controls whether the authorization server shows UI to the user.
+
+| Value | Behavior |
+|---|---|
+| `none` | No UI shown; return an error if interaction is needed |
+| `login` | Force the user to re-authenticate |
+| `consent` | Force the consent screen even if already granted |
+| `select_account` | Ask the user to pick an account |
+
+::: notes
+`prompt` is not part of core OAuth 2.0 — it originates from OpenID Connect but is widely supported by authorization servers regardless. `none` is commonly used for silent token renewal: if the server can satisfy the request without interaction it will, otherwise it returns `login_required` or `interaction_required`. `consent` is useful when you need a fresh consent record, for example before a sensitive operation.
 :::
 
 ---
@@ -145,7 +277,7 @@ This endpoint is not a browser redirect. It is an HTTP request made by the clien
 
 ## Grant types are token inputs
 
-A grant is the thing the client presents to get a token.
+A grant represents a principal's authorization for the client to act on their behalf. The client presents it to get a token.
 
 - Authorization code
 - Client credentials
@@ -175,7 +307,7 @@ Use "exchange" as plain language, not as a separate core OAuth object. The most 
 
 ---
 
-## Token request anatomy
+## Authorization code exchange request anatomy
 
 - `grant_type` tells the server which validation rules apply.
 - `code` is the authorization code when using the code grant.
@@ -192,7 +324,7 @@ Token endpoint anatomy changes by grant type. For authorization code, the server
 
 `/authorize` creates a grant through the browser.
 
-`/token` validates a grant and issues tokens through a back channel.
+`/token` code exchange: validates a grant and issues tokens through a back channel.
 
 Grants describe why a token may be issued.
 

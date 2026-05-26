@@ -142,6 +142,13 @@ body {
   font-size: clamp(0.92rem, 1.6vw, 1.16rem);
 }
 
+.slide pre code mark {
+  background: #fef3c7;
+  color: inherit;
+  border-radius: 2px;
+  font-style: normal;
+}
+
 .slide blockquote {
   margin: 22px 0;
   padding: 18px 22px;
