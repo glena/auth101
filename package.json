@@ -1,0 +1,23 @@
+{
+  "name": "auth-presentations",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Static HTML presentations for teaching authentication and authorization.",
+  "type": "module",
+  "packageManager": "npm@11.11.1",
+  "engines": {
+    "node": ">=20",
+    "npm": ">=11.10.0"
+  },
+  "scripts": {
+    "preinstall": "node scripts/require-sfw-install.js",
+    "bootstrap": "sfw npm exec --yes --package npm@11.11.1 -- npm install",
+    "build": "node scripts/build.js",
+    "check": "node scripts/build.js --check",
+    "install-hooks": "node scripts/install-hooks.js",
+    "review:marked": "sfw npm view marked@17.0.6 version time dependencies peerDependencies engines license dist.integrity --json"
+  },
+  "dependencies": {
+    "marked": "17.0.6"
+  }
+}

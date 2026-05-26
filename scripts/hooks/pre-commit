@@ -1,0 +1,11 @@
+#!/bin/sh
+set -eu
+
+if ! command -v sfw >/dev/null 2>&1; then
+  echo "Error: Socket Firewall is required. Install sfw and run commits again." >&2
+  exit 1
+fi
+
+sfw npm run build
+git add index.html presentations/*/index.html
+
