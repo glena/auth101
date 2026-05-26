@@ -7,5 +7,5 @@ if ! command -v sfw >/dev/null 2>&1; then
 fi
 
 sfw npm run build
+sfw npm run lint
 git add index.html presentations/*/index.html
-

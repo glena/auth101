@@ -97,9 +97,9 @@ This avoids sending a token intended for the orders API to the invoices API. It 
 
 Token exchange can express two different relationships.
 
-| Relationship | Meaning |
-| --- | --- |
-| Delegation | Actor acts for the subject |
+| Relationship  | Meaning                         |
+| ------------- | ------------------------------- |
+| Delegation    | Actor acts for the subject      |
 | Impersonation | Actor is treated as the subject |
 
 ::: notes
@@ -132,11 +132,11 @@ The request body is `application/x-www-form-urlencoded`, not JSON. The client au
 
 ## Required parameters
 
-| Parameter | Meaning |
-| --- | --- |
-| `grant_type` | Selects RFC 8693 token exchange |
-| `subject_token` | Token being exchanged |
-| `subject_token_type` | Type of `subject_token` |
+| Parameter            | Meaning                         |
+| -------------------- | ------------------------------- |
+| `grant_type`         | Selects RFC 8693 token exchange |
+| `subject_token`      | Token being exchanged           |
+| `subject_token_type` | Type of `subject_token`         |
 
 ::: notes
 `grant_type` must be exactly `urn:ietf:params:oauth:grant-type:token-exchange`. `subject_token` represents the identity or authority on behalf of which the request is made. `subject_token_type` tells the authorization server how to validate and interpret the presented token, for example as an access token, refresh token, ID token, JWT, or SAML assertion.
@@ -146,11 +146,11 @@ The request body is `application/x-www-form-urlencoded`, not JSON. The client au
 
 ## Target parameters
 
-| Parameter | Meaning |
-| --- | --- |
-| `resource` | Target resource URI |
+| Parameter  | Meaning                |
+| ---------- | ---------------------- |
+| `resource` | Target resource URI    |
 | `audience` | Logical target service |
-| `scope` | Requested permissions |
+| `scope`    | Requested permissions  |
 
 ::: notes
 All three are optional. `resource` can appear more than once and uses absolute URI values without fragments. `audience` can appear more than once and names target services using values meaningful to the authorization server. `scope` is a space-delimited OAuth scope list for the token being requested. Broad combinations can be rejected with `invalid_target`.
@@ -180,10 +180,10 @@ This parameter is optional. If omitted, the authorization server chooses the iss
 
 Use actor parameters when the issued token needs delegation context.
 
-| Parameter | Meaning |
-| --- | --- |
-| `actor_token` | Token representing the acting party |
-| `actor_token_type` | Type of `actor_token` |
+| Parameter          | Meaning                             |
+| ------------------ | ----------------------------------- |
+| `actor_token`      | Token representing the acting party |
+| `actor_token_type` | Type of `actor_token`               |
 
 ::: notes
 `actor_token` is optional. `actor_token_type` is required when `actor_token` is present and must not be sent otherwise. The authorization server validates both the subject and actor tokens and decides whether the requested delegation is allowed.

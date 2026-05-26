@@ -2,10 +2,16 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { marked } from "marked";
+import prettier from "prettier";
 
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
 const presentationsDir = join(root, "presentations");
 const checkOnly = process.argv.includes("--check");
+const resolvedPrettierConfig = (await prettier.resolveConfig(join(root, "index.html"))) ?? {};
+const htmlPrettierConfig = {
+  ...resolvedPrettierConfig,
+  parser: "html",
+};
 
 marked.use({
   gfm: true,
@@ -142,7 +148,10 @@ function renderIndex(decks) {
   const cards = decks
     .map((deck) => {
       const resources = deck.metadata.resources
-        .map((resource) => `<a class="button secondary" href="${escapeHtml(resource.url)}">${escapeHtml(resource.label)}</a>`)
+        .map(
+          (resource) =>
+            `<a class="button secondary" href="${escapeHtml(resource.url)}">${escapeHtml(resource.label)}</a>`,
+        )
         .join("\n          ");
 
       return `<article class="deck-card">
@@ -231,11 +240,15 @@ function discoverDecks() {
   return readdirSync(presentationsDir, { withFileTypes: true })
     .filter((entry) => entry.isDirectory() && existsSync(join(presentationsDir, entry.name, "slides.md")))
     .map((entry) => readDeck(entry.name))
-    .sort((left, right) => left.metadata.order - right.metadata.order || left.metadata.title.localeCompare(right.metadata.title));
+    .sort(
+      (left, right) =>
+        left.metadata.order - right.metadata.order || left.metadata.title.localeCompare(right.metadata.title),
+    );
 }
 
-function writeOrCheck(path, contents) {
-  const output = normalize(contents);
+async function writeOrCheck(path, contents, options = {}) {
+  const formatted = options.format === "html" ? await prettier.format(contents, htmlPrettierConfig) : contents;
+  const output = normalize(formatted);
   if (checkOnly) {
     const current = existsSync(path) ? normalize(readFileSync(path, "utf8")) : "";
     if (current !== output) {
@@ -255,9 +268,9 @@ if (decks.length === 0) {
   throw new Error("No presentations found.");
 }
 
-writeOrCheck(join(root, "index.html"), renderIndex(decks));
+await writeOrCheck(join(root, "index.html"), renderIndex(decks), { format: "html" });
 for (const deck of decks) {
-  writeOrCheck(deck.outputPath, renderPresentation(deck));
+  await writeOrCheck(deck.outputPath, renderPresentation(deck), { format: "html" });
 }
 
 if (checkOnly && process.exitCode) {

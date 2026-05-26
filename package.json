@@ -14,13 +14,19 @@
     "bootstrap": "sfw npm exec --yes --package npm@11.11.1 -- npm install",
     "build": "node scripts/build.js",
     "check": "node scripts/build.js --check",
+    "format": "prettier --write \"**/*.{html,md,css,js}\"",
+    "lint": "prettier --check \"**/*.{html,md,css,js}\"",
     "serve": "node scripts/build.js && serve --no-clipboard -l tcp://${HOST:-127.0.0.1}:${CONDUCTOR_PORT:-${PORT:-4173}} .",
     "install-hooks": "node scripts/install-hooks.js",
     "review:marked": "sfw npm view marked@17.0.6 version time dependencies peerDependencies engines license dist.integrity --json",
+    "review:prettier": "sfw npm view prettier@3.8.3 version time dependencies peerDependencies engines license dist.integrity --json",
     "review:serve": "sfw npm view serve@14.2.6 version time dependencies peerDependencies engines license dist.integrity --json"
   },
   "dependencies": {
     "marked": "17.0.6",
     "serve": "14.2.6"
+  },
+  "devDependencies": {
+    "prettier": "3.8.3"
   }
 }

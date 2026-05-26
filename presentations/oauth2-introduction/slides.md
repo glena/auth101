@@ -31,15 +31,15 @@ Frame this as an introduction to protocol mechanics, not a security deep dive. O
 
 ## Key terminology
 
-| Term | Meaning |
-|---|---|
-| **Resource owner** | The user who owns the data |
-| **Client** | The application requesting access |
-| **Authorization server** | Issues tokens after authenticating the owner |
-| **Resource server** | Hosts the protected data; accepts tokens |
-| **Scope** | A named permission the client is asking for |
-| **Access token** | Short-lived credential used to call the resource server |
-| **Refresh token** | Long-lived credential used to get new access tokens |
+| Term                     | Meaning                                                 |
+| ------------------------ | ------------------------------------------------------- |
+| **Resource owner**       | The user who owns the data                              |
+| **Client**               | The application requesting access                       |
+| **Authorization server** | Issues tokens after authenticating the owner            |
+| **Resource server**      | Hosts the protected data; accepts tokens                |
+| **Scope**                | A named permission the client is asking for             |
+| **Access token**         | Short-lived credential used to call the resource server |
+| **Refresh token**        | Long-lived credential used to get new access tokens     |
 
 ::: notes
 These terms come directly from RFC 6749 and are used consistently throughout the spec. Being precise here pays off when reading actual requests and responses — each parameter name maps to one of these roles.
@@ -195,10 +195,10 @@ State binds the authorization response to the browser session, mitigating CSRF. 
 
 ## `response_type` values
 
-| Value | What you get | Notes |
-|---|---|---|
-| `code` | Authorization code | Standard; exchange it at `/token` |
-| `token` | Access token directly | Implicit flow — deprecated |
+| Value   | What you get          | Notes                             |
+| ------- | --------------------- | --------------------------------- |
+| `code`  | Authorization code    | Standard; exchange it at `/token` |
+| `token` | Access token directly | Implicit flow — deprecated        |
 
 ::: notes
 `code` is the only value recommended by current guidance. The implicit `token` value delivers the access token directly in the URL fragment, exposing it to browser history and referrer headers. Extension specifications such as OpenID Connect define additional values.
@@ -226,11 +226,11 @@ State binds the authorization response to the browser session, mitigating CSRF. 
 
 ## `response_mode` values
 
-| Value | How the response is delivered |
-|---|---|
-| `query` | Parameters appended to the redirect URI as a query string |
-| `fragment` | Parameters appended to the redirect URI as a URL fragment |
-| `form_post` | Parameters sent as an HTTP POST body to the redirect URI |
+| Value       | How the response is delivered                             |
+| ----------- | --------------------------------------------------------- |
+| `query`     | Parameters appended to the redirect URI as a query string |
+| `fragment`  | Parameters appended to the redirect URI as a URL fragment |
+| `form_post` | Parameters sent as an HTTP POST body to the redirect URI  |
 
 ::: notes
 `query` is the default for `response_type=code` and keeps the authorization code in the URL query string. `fragment` was the default for the implicit flow — the token lands in the hash, which the browser does not send to the server but is still readable by page scripts. `form_post` avoids exposing parameters in the URL entirely; the authorization server POSTs the response to the redirect URI, which makes it suitable when the response payload is large or must not appear in logs.
@@ -242,12 +242,12 @@ State binds the authorization response to the browser session, mitigating CSRF. 
 
 `prompt` controls whether the authorization server shows UI to the user.
 
-| Value | Behavior |
-|---|---|
-| `none` | No UI shown; return an error if interaction is needed |
-| `login` | Force the user to re-authenticate |
-| `consent` | Force the consent screen even if already granted |
-| `select_account` | Ask the user to pick an account |
+| Value            | Behavior                                              |
+| ---------------- | ----------------------------------------------------- |
+| `none`           | No UI shown; return an error if interaction is needed |
+| `login`          | Force the user to re-authenticate                     |
+| `consent`        | Force the consent screen even if already granted      |
+| `select_account` | Ask the user to pick an account                       |
 
 ::: notes
 `prompt` is not part of core OAuth 2.0 — it originates from OpenID Connect but is widely supported by authorization servers regardless. `none` is commonly used for silent token renewal: if the server can satisfy the request without interaction it will, otherwise it returns `login_required` or `interaction_required`. `consent` is useful when you need a fresh consent record, for example before a sensitive operation.
