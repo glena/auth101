@@ -1,5 +1,5 @@
 ---
-title: OAuth 2 Response Types and Code Exchange
+title: Response Types and Code Exchange
 description: A focused look at response_type values, implicit versus code flow, client authentication, and the authorization code exchange.
 status: draft
 order: 2
@@ -14,7 +14,7 @@ resources:
     url: https://www.rfc-editor.org/info/rfc9700
 ---
 
-# OAuth 2 Response Types and Code Exchange
+# Response Types and Code Exchange
 
 Response types decide what returns from `/authorize`.
 

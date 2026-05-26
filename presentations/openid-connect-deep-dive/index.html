@@ -14,19 +14,23 @@
             <h1>OpenID Connect Deep Dive</h1>
           </div>
           <div class="slide-body">
-            <p>OIDC adds identity to OAuth 2.</p>
+            <p>OIDC adds identity, discovery metadata, and ID Token validation rules to OAuth 2.</p>
             <ul>
-              <li>How OIDC builds on OAuth</li>
-              <li>New authorization parameters and response types</li>
-              <li>ID Token anatomy and claim validation</li>
-              <li><code>nonce</code>, <code>state</code>, and session binding</li>
-              <li>Authentication restrictions and assurances</li>
+              <li>OAuth base: OIDC profiles OAuth authorization code and token flows</li>
+              <li>Relying Party role: the OAuth client relies on an OP login result</li>
+              <li>Discovery: <code>.well-known</code> metadata tells the RP where endpoints and keys live</li>
+              <li>
+                Authorize parameters: <code>openid</code>, <code>nonce</code>, <code>prompt</code>,
+                <code>max_age</code>, <code>acr_values</code>, <code>claims</code>
+              </li>
+              <li>ID Token validation: signature, issuer, audience, time, nonce, and assurance claims</li>
             </ul>
             <p>
               <a href="https://openid.net/specs/openid-connect-core-1_0-errata2.html">OpenID Connect Core</a> ·
               <a href="https://openid.net/specs/openid-connect-discovery-1_0-errata2.html">Discovery</a> ·
               <a href="https://openid.net/specs/oauth-v2-multiple-response-types-1_0.html">Multiple Response Types</a> ·
-              <a href="https://www.rfc-editor.org/info/rfc6749">RFC 6749</a>
+              <a href="https://www.rfc-editor.org/info/rfc8414">RFC 8414</a> ·
+              <a href="https://www.rfc-editor.org/info/rfc7517">RFC 7517</a>
             </p>
           </div>
         </div>
@@ -41,11 +45,13 @@
               <div>
                 <h3>OAuth 2</h3>
                 <p>Delegated authorization for APIs.</p>
+                <p>Client asks for access tokens.</p>
               </div>
 
               <div>
                 <h3>OIDC</h3>
                 <p>Authentication layer on OAuth 2.</p>
+                <p>RP validates ID Tokens.</p>
               </div>
             </div>
           </div>
@@ -57,13 +63,58 @@
             <h2>OIDC changes the audience</h2>
           </div>
           <div class="slide-body">
-            <p>The client is now a relying party.</p>
-            <pre><code class="language-text">End user -&gt; OpenID Provider -&gt; Relying Party
+            <p>The OAuth client is also an OIDC Relying Party.</p>
+            <pre><code class="language-text">End user -&gt; OpenID Provider authenticates
+Relying Party &lt;- validates ID Token result
 </code></pre>
           </div>
         </div>
       </section>
-      <section class="slide" aria-label="The openid scope" data-slide="4">
+      <section class="slide" aria-label="Client versus Relying Party" data-slide="4">
+        <div class="slide-content">
+          <div class="slide-title">
+            <h2>Client versus Relying Party</h2>
+          </div>
+          <div class="slide-body">
+            <p>The same app can wear both names.</p>
+            <table>
+              <thead>
+                <tr>
+                  <th>Term</th>
+                  <th>Focus</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>OAuth client</td>
+                  <td>Registered app requesting delegated access and tokens</td>
+                </tr>
+                <tr>
+                  <td>OIDC Relying Party</td>
+                  <td>Same app relying on a verified user authentication result</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+      <section class="slide" aria-label='What "relying" means' data-slide="5">
+        <div class="slide-content">
+          <div class="slide-title">
+            <h2>What &quot;relying&quot; means</h2>
+          </div>
+          <div class="slide-body">
+            <p>The RP trusts a specific OP&#39;s signed result after validation.</p>
+            <ul>
+              <li>It redirects the user to the OP instead of collecting credentials</li>
+              <li>It validates the ID Token signature and required claims</li>
+              <li>It maps <code>(iss, sub)</code> to a local account or session</li>
+              <li>It accepts risk from the configured OP trust relationship</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+      <section class="slide" aria-label="The openid scope" data-slide="6">
         <div class="slide-content">
           <div class="slide-title">
             <h2>The <code>openid</code> scope</h2>
@@ -74,12 +125,13 @@
   response_type=code&amp;
   scope=openid%20profile%20email&amp;
   client_id=rp-web&amp;
-  redirect_uri=https%3A%2F%2Frp.example%2Fcb
+  redirect_uri=https%3A%2F%2Frp.example%2Fcb&amp;
+  nonce=n-0S6_WzA2Mj
 </code></pre>
           </div>
         </div>
       </section>
-      <section class="slide" aria-label="New authorize parameters" data-slide="5">
+      <section class="slide" aria-label="New authorize parameters" data-slide="7">
         <div class="slide-content">
           <div class="slide-title">
             <h2>New authorize parameters</h2>
@@ -87,69 +139,140 @@
           <div class="slide-body">
             <p>OIDC adds authentication controls.</p>
             <ul>
-              <li><code>nonce</code></li>
-              <li><code>prompt</code></li>
-              <li><code>max_age</code></li>
-              <li><code>login_hint</code></li>
-              <li><code>acr_values</code></li>
-              <li><code>claims</code></li>
+              <li><code>nonce</code>: bind the ID Token to this browser request</li>
+              <li><code>prompt</code>: request login, consent, silent check, or account selection behavior</li>
+              <li><code>max_age</code>: require recent authentication</li>
+              <li><code>login_hint</code>: hint which account the OP should show</li>
+              <li><code>acr_values</code>: request an authentication assurance class</li>
+              <li><code>claims</code>: request specific ID Token or UserInfo claims</li>
             </ul>
           </div>
         </div>
       </section>
-      <section class="slide" aria-label="responsetype=code" data-slide="6">
+      <section class="slide" aria-label="responsetype=code" data-slide="8">
         <div class="slide-content">
           <div class="slide-title">
             <h2><code>response_type=code</code></h2>
           </div>
           <div class="slide-body">
             <p>Authorization code flow returns the ID Token from <code>/token</code>.</p>
-            <pre><code class="language-text">/authorize -&gt; code
-/token     -&gt; id_token, access_token
+            <pre><code class="language-text">/authorize -&gt; code in browser redirect
+/token     -&gt; id_token + optional access_token
 </code></pre>
           </div>
         </div>
       </section>
-      <section class="slide" aria-label="OIDC implicit response types" data-slide="7">
+      <section class="slide" aria-label="OIDC implicit response types" data-slide="9">
         <div class="slide-content">
           <div class="slide-title">
             <h2>OIDC implicit response types</h2>
           </div>
           <div class="slide-body">
             <p>OIDC can return ID Tokens from <code>/authorize</code>.</p>
-            <pre><code class="language-text">id_token
-id_token token
+            <pre><code class="language-text">id_token       -&gt; ID Token only in front channel
+id_token token -&gt; ID Token and access token in front channel
 </code></pre>
           </div>
         </div>
       </section>
-      <section class="slide" aria-label="OIDC hybrid response types" data-slide="8">
+      <section class="slide" aria-label="OIDC hybrid response types" data-slide="10">
         <div class="slide-content">
           <div class="slide-title">
             <h2>OIDC hybrid response types</h2>
           </div>
           <div class="slide-body">
             <p>Hybrid returns some values up front and some later.</p>
-            <pre><code class="language-text">code id_token
-code token
-code id_token token
+            <pre><code class="language-text">code id_token       -&gt; front-channel login proof plus later token call
+code token          -&gt; front-channel access token plus later token call
+code id_token token -&gt; all front-channel values plus later token call
 </code></pre>
           </div>
         </div>
       </section>
-      <section class="slide" aria-label="ID Token purpose" data-slide="9">
+      <section class="slide" aria-label="ID Token purpose" data-slide="11">
         <div class="slide-content">
           <div class="slide-title">
             <h2>ID Token purpose</h2>
           </div>
           <div class="slide-body">
             <p>The ID Token is the authentication assertion.</p>
-            <pre><code class="language-text">issuer says: subject authenticated for this audience
+            <pre><code class="language-text">issuer says: subject authenticated for this RP audience at this time
 </code></pre>
           </div>
         </div>
       </section>
-      <section class="slide" aria-label="ID Token shape" data-slide="10">
+      <section class="slide" aria-label="Discovery endpoint" data-slide="12">
+        <div class="slide-content">
+          <div class="slide-title">
+            <h2>Discovery endpoint</h2>
+          </div>
+          <div class="slide-body">
+            <p>OIDC discovery publishes OP metadata at a well-known URL.</p>
+            <pre><code class="language-text">https://issuer.example/.well-known/openid-configuration
+</code></pre>
+            <ul>
+              <li>Confirms the issuer identifier</li>
+              <li>Lists authorization, token, UserInfo, and JWKS endpoints</li>
+              <li>Advertises supported scopes, response types, claims, and algorithms</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+      <section class="slide" aria-label="OAuth authorization server metadata" data-slide="13">
+        <div class="slide-content">
+          <div class="slide-title">
+            <h2>OAuth authorization server metadata</h2>
+          </div>
+          <div class="slide-body">
+            <p>OAuth also has a well-known metadata endpoint.</p>
+            <pre><code class="language-text">https://issuer.example/.well-known/oauth-authorization-server
+</code></pre>
+            <ul>
+              <li>Describes OAuth endpoints and capabilities</li>
+              <li>May overlap with OIDC discovery fields</li>
+              <li>Does not by itself make a server an OpenID Provider</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+      <section class="slide" aria-label="JWKS endpoint" data-slide="14">
+        <div class="slide-content">
+          <div class="slide-title">
+            <h2>JWKS endpoint</h2>
+          </div>
+          <div class="slide-body">
+            <p><code>jwks_uri</code> points to the OP&#39;s public signing keys.</p>
+            <pre><code class="language-json">{
+  &quot;jwks_uri&quot;: &quot;https://issuer.example/keys&quot;
+}
+</code></pre>
+            <ul>
+              <li>Publishes public keys, not private keys</li>
+              <li>
+                Each key usually has <code>kid</code>, <code>kty</code>, <code>use</code>, <code>alg</code>, and key
+                material
+              </li>
+              <li>RPs cache keys and refresh on rotation</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+      <section class="slide" aria-label="ID Token signature verification" data-slide="15">
+        <div class="slide-content">
+          <div class="slide-title">
+            <h2>ID Token signature verification</h2>
+          </div>
+          <div class="slide-body">
+            <p>Verify the JWT before trusting any claims.</p>
+            <pre><code class="language-text">read header.alg and header.kid
+select matching public key from jwks_uri
+verify signature over header.payload
+then validate claims
+</code></pre>
+          </div>
+        </div>
+      </section>
+      <section class="slide" aria-label="ID Token shape" data-slide="16">
         <div class="slide-content">
           <div class="slide-title">
             <h2>ID Token shape</h2>
@@ -157,81 +280,84 @@ code id_token token
           <div class="slide-body">
             <p>An ID Token is usually a signed JWT.</p>
             <pre><code class="language-text">header.payload.signature
+  header: algorithm and key id
+  payload: claims about authentication
+  signature: OP proof over header.payload
 </code></pre>
           </div>
         </div>
       </section>
-      <section class="slide" aria-label="Core identity claims" data-slide="11">
+      <section class="slide" aria-label="Core identity claims" data-slide="17">
         <div class="slide-content">
           <div class="slide-title">
             <h2>Core identity claims</h2>
           </div>
           <div class="slide-body">
             <ul>
-              <li><code>iss</code>: issuer</li>
-              <li><code>sub</code>: subject</li>
-              <li><code>aud</code>: relying party client ID</li>
-              <li><code>exp</code>: expiration</li>
-              <li><code>iat</code>: issued at</li>
+              <li><code>iss</code>: OP issuer URL that must match discovery</li>
+              <li><code>sub</code>: stable subject identifier within that issuer</li>
+              <li><code>aud</code>: RP client ID that must include this client</li>
+              <li><code>exp</code>: expiration time after which the token is invalid</li>
+              <li><code>iat</code>: issued-at time used for age and sanity checks</li>
             </ul>
           </div>
         </div>
       </section>
-      <section class="slide" aria-label="Audience and authorized party" data-slide="12">
+      <section class="slide" aria-label="Audience and authorized party" data-slide="18">
         <div class="slide-content">
           <div class="slide-title">
             <h2>Audience and authorized party</h2>
           </div>
           <div class="slide-body">
-            <p><code>aud</code> tells who the token is for.</p>
-            <p><code>azp</code> may identify the authorized party.</p>
+            <p><code>aud</code> tells who the ID Token is for.</p>
+            <p><code>azp</code> identifies the authorized party when needed.</p>
           </div>
         </div>
       </section>
-      <section class="slide" aria-label="Time and freshness claims" data-slide="13">
+      <section class="slide" aria-label="Time and freshness claims" data-slide="19">
         <div class="slide-content">
           <div class="slide-title">
             <h2>Time and freshness claims</h2>
           </div>
           <div class="slide-body">
             <ul>
-              <li><code>exp</code> rejects expired tokens</li>
-              <li><code>iat</code> supports age checks</li>
-              <li><code>auth_time</code> says when login happened</li>
+              <li><code>exp</code>: reject expired ID Tokens</li>
+              <li><code>iat</code>: detect implausible or stale issuance</li>
+              <li><code>auth_time</code>: know when the user last authenticated</li>
             </ul>
           </div>
         </div>
       </section>
-      <section class="slide" aria-label="Flow binding claims" data-slide="14">
+      <section class="slide" aria-label="Flow binding claims" data-slide="20">
         <div class="slide-content">
           <div class="slide-title">
             <h2>Flow binding claims</h2>
           </div>
           <div class="slide-body">
             <ul>
-              <li><code>nonce</code>: binds ID Token to browser request</li>
-              <li><code>c_hash</code>: binds authorization code</li>
-              <li><code>at_hash</code>: binds access token</li>
+              <li><code>nonce</code>: binds ID Token to the RP&#39;s browser request</li>
+              <li><code>c_hash</code>: binds front-channel authorization code to the ID Token</li>
+              <li><code>at_hash</code>: binds front-channel access token to the ID Token</li>
             </ul>
           </div>
         </div>
       </section>
-      <section class="slide" aria-label="Claims relate to request parameters" data-slide="15">
+      <section class="slide" aria-label="Claims relate to request parameters" data-slide="21">
         <div class="slide-content">
           <div class="slide-title">
             <h2>Claims relate to request parameters</h2>
           </div>
           <div class="slide-body">
-            <pre><code class="language-text">nonce      -&gt; nonce claim
-max_age    -&gt; auth_time claim
-acr_values -&gt; acr claim
-scope      -&gt; profile claims
-claims     -&gt; requested claim set
+            <pre><code class="language-text">nonce      -&gt; nonce claim for replay defense
+max_age    -&gt; auth_time claim for freshness
+acr_values -&gt; acr claim for assurance class
+scope      -&gt; standard claim groups like profile or email
+claims     -&gt; exact requested ID Token or UserInfo claims
 </code></pre>
           </div>
         </div>
       </section>
-      <section class="slide" aria-label="state versus nonce" data-slide="16">
+      <section class="slide" aria-label="state versus nonce" data-slide="22">
         <div class="slide-content">
           <div class="slide-title">
             <h2><code>state</code> versus <code>nonce</code></h2>
@@ -240,57 +366,57 @@ claims     -&gt; requested claim set
             <div class="cols">
               <div>
                 <h3><code>state</code></h3>
-                <p>Binds redirect response to client session.</p>
+                <p>Binds the authorization redirect to the RP session.</p>
               </div>
 
               <div>
                 <h3><code>nonce</code></h3>
-                <p>Binds ID Token to authentication request.</p>
+                <p>Binds the ID Token to the authentication request.</p>
               </div>
             </div>
           </div>
         </div>
       </section>
-      <section class="slide" aria-label="What nonce solves" data-slide="17">
+      <section class="slide" aria-label="What nonce solves" data-slide="23">
         <div class="slide-content">
           <div class="slide-title">
             <h2>What nonce solves</h2>
           </div>
           <div class="slide-body">
             <p>Nonce prevents replayed ID Tokens.</p>
-            <pre><code class="language-text">old id_token + wrong browser session -&gt; rejected
+            <pre><code class="language-text">old id_token + wrong browser session -&gt; nonce mismatch -&gt; rejected
 </code></pre>
           </div>
         </div>
       </section>
-      <section class="slide" aria-label="prompt" data-slide="18">
+      <section class="slide" aria-label="prompt" data-slide="24">
         <div class="slide-content">
           <div class="slide-title">
             <h2><code>prompt</code></h2>
           </div>
           <div class="slide-body">
             <p>The RP can ask for interaction behavior.</p>
-            <pre><code class="language-text">prompt=login
-prompt=consent
-prompt=none
-prompt=select_account
+            <pre><code class="language-text">prompt=login          -&gt; force user reauthentication
+prompt=consent        -&gt; ask for consent again
+prompt=none           -&gt; silent check, no UI allowed
+prompt=select_account -&gt; ask user to choose an account
 </code></pre>
           </div>
         </div>
       </section>
-      <section class="slide" aria-label="maxage" data-slide="19">
+      <section class="slide" aria-label="maxage" data-slide="25">
         <div class="slide-content">
           <div class="slide-title">
             <h2><code>max_age</code></h2>
           </div>
           <div class="slide-body">
             <p>The RP sets maximum authentication age.</p>
-            <pre><code class="language-text">max_age=300
+            <pre><code class="language-text">max_age=300 -&gt; authentication must be no older than 5 minutes
 </code></pre>
           </div>
         </div>
       </section>
-      <section class="slide" aria-label="Authentication context" data-slide="20">
+      <section class="slide" aria-label="Authentication context" data-slide="26">
         <div class="slide-content">
           <div class="slide-title">
             <h2>Authentication context</h2>
@@ -301,10 +427,11 @@ prompt=select_account
   &quot;acr&quot;: &quot;urn:example:loa:2&quot;
 }
 </code></pre>
+            <p>The value is meaningful only inside an agreed trust framework.</p>
           </div>
         </div>
       </section>
-      <section class="slide" aria-label="Authentication methods" data-slide="21">
+      <section class="slide" aria-label="Authentication methods" data-slide="27">
         <div class="slide-content">
           <div class="slide-title">
             <h2>Authentication methods</h2>
@@ -315,10 +442,11 @@ prompt=select_account
   &quot;amr&quot;: [&quot;pwd&quot;, &quot;otp&quot;]
 }
 </code></pre>
+            <p>Methods describe what happened; they are not assurance by themselves.</p>
           </div>
         </div>
       </section>
-      <section class="slide" aria-label="Claims parameter" data-slide="22">
+      <section class="slide" aria-label="Claims parameter" data-slide="28">
         <div class="slide-content">
           <div class="slide-title">
             <h2>Claims parameter</h2>
@@ -327,37 +455,41 @@ prompt=select_account
             <p>The RP can ask for specific claims.</p>
             <pre><code class="language-json">{
   &quot;id_token&quot;: {
-    &quot;email_verified&quot;: { &quot;essential&quot;: true }
+    &quot;email_verified&quot;: { &quot;essential&quot;: true },
+    &quot;acr&quot;: { &quot;values&quot;: [&quot;urn:example:loa:2&quot;] }
   }
 }
 </code></pre>
           </div>
         </div>
       </section>
-      <section class="slide" aria-label="Validation checklist" data-slide="23">
+      <section class="slide" aria-label="Validation checklist" data-slide="29">
         <div class="slide-content">
           <div class="slide-title">
             <h2>Validation checklist</h2>
           </div>
           <div class="slide-body">
             <ul>
-              <li>Discover issuer metadata</li>
-              <li>Validate signature and algorithm</li>
-              <li>Check <code>iss</code>, <code>aud</code>, <code>exp</code>, <code>iat</code></li>
-              <li>Check <code>nonce</code></li>
-              <li>Check <code>auth_time</code>, <code>acr</code>, <code>amr</code> when required</li>
+              <li>Discover issuer metadata and <code>jwks_uri</code></li>
+              <li>Validate signature, key, and allowed algorithm</li>
+              <li>
+                Check <code>iss</code>, <code>aud</code>, <code>azp</code>, <code>exp</code>, and <code>iat</code>
+              </li>
+              <li>Check <code>nonce</code> against the pending request</li>
+              <li>Check <code>auth_time</code>, <code>acr</code>, and <code>amr</code> when requested or required</li>
             </ul>
           </div>
         </div>
       </section>
-      <section class="slide" aria-label="The mental model" data-slide="24">
+      <section class="slide" aria-label="The mental model" data-slide="30">
         <div class="slide-content">
           <div class="slide-title">
             <h2>The mental model</h2>
           </div>
           <div class="slide-body">
-            <p>OAuth says what access was delegated.</p>
+            <p>OAuth says what access was delegated to a client.</p>
             <p>OIDC says who authenticated and how the RP can verify it.</p>
+            <p>Discovery and JWKS tell the RP where to validate issuer metadata and signatures.</p>
             <p><code>state</code> protects the redirect; <code>nonce</code> protects the ID Token.</p>
           </div>
         </div>
@@ -372,30 +504,36 @@ prompt=select_account
     <div class="progress" aria-hidden="true"><span data-progress></span></div>
     <script type="application/json" id="notes-data">
       [
-        "\u003cp>Use OpenID Connect Core 1.0 incorporating errata set 2 as the main reference. Be precise: OAuth authorizes API access; OIDC authenticates the end user for the relying party by returning an ID Token.\u003c/p>\n",
-        "\u003cp>OIDC does not replace OAuth. It profiles OAuth and adds ID Tokens, UserInfo, discovery, dynamic registration, and authentication-specific parameters.\u003c/p>\n",
-        "\u003cp>OpenID Provider, or OP, is the OIDC term for the authorization server that authenticates the user. Relying Party, or RP, is the OAuth client relying on the authentication result.\u003c/p>\n",
-        "\u003cp>Without \u003ccode>openid\u003c/code>, this is an OAuth request, not an OIDC authentication request. Profile, email, address, and phone are optional standard scopes for requesting user claims.\u003c/p>\n",
-        "\u003cp>These parameters help the RP ask for a particular authentication interaction or claim result. The OP still applies local policy and may decline or return an error.\u003c/p>\n",
-        "\u003cp>This is the modern default. Tokens are returned through the back channel, and the RP can authenticate at the token endpoint when it is confidential.\u003c/p>\n",
-        "\u003cp>OIDC does not use OAuth&#39;s bare \u003ccode>token\u003c/code> response type because no ID Token would be returned. Modern security guidance still prefers code flow with PKCE over implicit-style browser token delivery.\u003c/p>\n",
-        "\u003cp>Hybrid flows were designed for clients that need an immediate front-channel authentication result plus later token endpoint exchange. They are more complex and require careful nonce and hash claim validation.\u003c/p>\n",
-        "\u003cp>Do not use an access token as a login assertion. Access tokens are for resource servers. ID Tokens are for the relying party and contain claims about authentication.\u003c/p>\n",
-        "\u003cp>OIDC Core defines ID Tokens as JWTs. The RP validates the signature using OP keys from discovery or configured metadata, then validates the claims.\u003c/p>\n",
-        "\u003cp>These are foundational validation claims. \u003ccode>sub\u003c/code> is the stable identifier for the user at this issuer and should be treated as pairwise with \u003ccode>iss\u003c/code>; do not compare subjects across issuers without issuer context.\u003c/p>\n",
-        "\u003cp>If the ID Token has multiple audiences, OIDC Core requires \u003ccode>azp\u003c/code> in some cases so the RP can identify the party to which the token was issued. The RP must reject tokens not intended for its client ID.\u003c/p>\n",
-        "\u003cp>When \u003ccode>max_age\u003c/code> is requested, the ID Token must include \u003ccode>auth_time\u003c/code>. RPs can also use \u003ccode>auth_time\u003c/code> for local reauthentication policies.\u003c/p>\n",
-        "\u003cp>\u003ccode>c_hash\u003c/code> and \u003ccode>at_hash\u003c/code> matter especially in implicit and hybrid flows where values arrive through the authorization endpoint. They let the RP verify that the code or access token belongs with the signed ID Token.\u003c/p>\n",
-        "\u003cp>Request parameters are asks. The ID Token and UserInfo response are the results. The RP must validate required results and handle cases where optional requested claims are absent.\u003c/p>\n",
-        "\u003cp>They are related but not interchangeable. State is returned as an authorization response parameter. Nonce is returned inside the signed ID Token. Use both in browser flows.\u003c/p>\n",
-        "\u003cp>The RP stores nonce with the pending authentication request, then checks the ID Token nonce claim after token validation. The value must have enough entropy to resist guessing.\u003c/p>\n",
-        "\u003cp>\u003ccode>prompt=none\u003c/code> is used for silent checks and must fail if user interaction is required. \u003ccode>prompt=login\u003c/code> asks the OP to reauthenticate the end user.\u003c/p>\n",
-        "\u003cp>If the user&#39;s active authentication is older than the allowed age, the OP must attempt active reauthentication. The returned ID Token must include \u003ccode>auth_time\u003c/code>.\u003c/p>\n",
-        "\u003cp>The meaning of \u003ccode>acr\u003c/code> values is trust-framework specific. The RP should only require or interpret values it has agreed on with the OP.\u003c/p>\n",
-        "\u003cp>\u003ccode>amr\u003c/code> is useful for risk decisions but should not be treated as a universal assurance level. Method names are not enough without issuer policy and context.\u003c/p>\n",
-        "\u003cp>The \u003ccode>claims\u003c/code> parameter allows more precise requests than scopes. Essential claims can cause an error if they cannot be supplied, depending on OP behavior and policy.\u003c/p>\n",
-        "\u003cp>Also handle key rotation and clock skew carefully. Validation must happen before creating a local application session.\u003c/p>\n",
-        "\u003cp>Close by reinforcing separation: access tokens authorize API calls, ID Tokens establish a login session at the relying party.\u003c/p>\n"
+        "\u003cp>Use OpenID Connect Core 1.0 incorporating errata set 2 as the main reference. Use OIDC Discovery for \u003ccode>.well-known/openid-configuration\u003c/code>, RFC 8414 for OAuth authorization server metadata, and RFC 7517 for JSON Web Keys. Be precise: OAuth authorizes API access; OIDC authenticates the end user for the relying party by returning an ID Token.\u003c/p>\n\u003cp>OAuth base: OIDC profiles OAuth authorization code and token flows. The RP still uses \u003ccode>/authorize\u003c/code>, \u003ccode>/token\u003c/code>, \u003ccode>client_id\u003c/code>, redirect URI validation, scopes, and token endpoint client authentication.\u003c/p>\n\u003cp>Relying Party role: the OAuth client relies on an OP login result. The same application is called a client in OAuth and a Relying Party in OIDC when it consumes an ID Token.\u003c/p>\n\u003cp>Discovery: \u003ccode>.well-known\u003c/code> metadata tells the RP where endpoints and keys live. This prevents every RP from hard-coding authorization, token, UserInfo, and JWKS URLs separately.\u003c/p>\n\u003cp>Authorize parameters: \u003ccode>openid\u003c/code>, \u003ccode>nonce\u003c/code>, \u003ccode>prompt\u003c/code>, \u003ccode>max_age\u003c/code>, \u003ccode>acr_values\u003c/code>, and \u003ccode>claims\u003c/code> turn an OAuth authorization request into an authentication request with explicit login requirements.\u003c/p>\n\u003cp>ID Token validation: signature, issuer, audience, time, nonce, and assurance claims are the checks that make the authentication result trustworthy enough for a local session.\u003c/p>\n",
+        "\u003cp>OIDC does not replace OAuth. It profiles OAuth and adds ID Tokens, UserInfo, discovery, dynamic registration, and authentication-specific parameters.\u003c/p>\n\u003cp>OAuth 2 is about delegated API access. The client asks for access tokens so it can call resource servers on the resource owner&#39;s behalf.\u003c/p>\n\u003cp>OIDC is about authentication. The RP asks the OP to authenticate the end user and return an ID Token the RP can validate.\u003c/p>\n\u003cp>The same flow can produce both outcomes. In OIDC code flow, the RP receives an ID Token for login and may also receive an access token for UserInfo or API access.\u003c/p>\n",
+        "\u003cp>OpenID Provider, or OP, is the OIDC term for the authorization server that authenticates the user. Relying Party, or RP, is the OAuth client relying on the authentication result.\u003c/p>\n\u003cp>The phrase &quot;also an OIDC Relying Party&quot; matters. OIDC does not remove the OAuth client role; it adds an authentication-specific role for the same software when the request includes \u003ccode>openid\u003c/code> and the application consumes an ID Token.\u003c/p>\n\u003cp>The end user authenticates at the OP. The RP receives a signed ID Token and decides whether that authentication event is sufficient to create or update a local application session.\u003c/p>\n\u003cp>The audience changes because an ID Token is meant for the RP, not for an API resource server. The RP is the party that must validate and rely on the authentication result.\u003c/p>\n",
+        "\u003cp>OAuth client is the general OAuth term. It is the application registered with the authorization server, identified by \u003ccode>client_id\u003c/code>, using redirect URIs, requesting scopes, and receiving tokens for API access.\u003c/p>\n\u003cp>OIDC Relying Party is the OpenID Connect term for that application when it uses OIDC to authenticate the end user. It relies on the OP&#39;s ID Token and claims instead of collecting the user&#39;s credentials directly.\u003c/p>\n\u003cp>The terms overlap because OIDC is built on OAuth. In a code flow login, the RP is still the OAuth client that sends the authorization request, receives the code, calls \u003ccode>/token\u003c/code>, and validates the response.\u003c/p>\n\u003cp>The difference is what the application is trying to prove. As an OAuth client, it wants authorization to call APIs. As a Relying Party, it wants evidence of who authenticated and under what conditions.\u003c/p>\n",
+        "\u003cp>&quot;Relying&quot; does not mean blindly accepting whatever token arrives. It means the application has a configured trust relationship with a specific OpenID Provider and is willing to base a local login decision on that provider&#39;s signed authentication result.\u003c/p>\n\u003cp>It redirects the user to the OP instead of collecting credentials. The OP handles the login ceremony, MFA, account selection, and authentication policy.\u003c/p>\n\u003cp>It validates the ID Token signature and required claims before relying on it. Validation includes issuer, audience, signature, algorithm, expiration, issued-at time, nonce, and any required authentication freshness or assurance claims.\u003c/p>\n\u003cp>It maps \u003ccode>(iss, sub)\u003c/code> to a local account or session. The stable key is usually \u003ccode>(iss, sub)\u003c/code>, not an email address by itself, because the same subject value can mean different users at different issuers.\u003c/p>\n\u003cp>It accepts risk from the configured OP trust relationship. If the OP account is compromised, the OP weakens its authentication policy, or the RP misconfigures validation, the RP&#39;s local login decision can be wrong.\u003c/p>\n",
+        "\u003cp>Without \u003ccode>openid\u003c/code>, this is an OAuth request, not an OIDC authentication request. Profile, email, address, and phone are optional standard scopes for requesting user claims.\u003c/p>\n\u003cp>\u003ccode>scope=openid\u003c/code> is the switch that makes the request an OIDC authentication request. Without it, the server should treat the request as OAuth only and does not have to return an ID Token.\u003c/p>\n\u003cp>\u003ccode>profile\u003c/code> asks for common profile claims such as name, family name, given name, and picture. It does not guarantee every claim will be returned.\u003c/p>\n\u003cp>\u003ccode>email\u003c/code> asks for email-related claims such as \u003ccode>email\u003c/code> and \u003ccode>email_verified\u003c/code>. RPs should still validate whether email was verified before using it for account recovery or account linking.\u003c/p>\n\u003cp>\u003ccode>client_id=rp-web\u003c/code> identifies the registered RP. This value becomes important later because the ID Token \u003ccode>aud\u003c/code> must include this client ID.\u003c/p>\n\u003cp>\u003ccode>redirect_uri\u003c/code> is still an OAuth redirect URI and must match registration. OIDC does not loosen redirect URI rules.\u003c/p>\n\u003cp>\u003ccode>nonce\u003c/code> binds the ID Token to this browser authentication request. The RP stores it before redirecting and checks it after validating the ID Token.\u003c/p>\n",
+        "\u003cp>These parameters help the RP ask for a particular authentication interaction or claim result. The OP still applies local policy and may decline or return an error.\u003c/p>\n\u003cp>\u003ccode>nonce\u003c/code> is a replay defense for ID Tokens. It is especially important when any token or ID Token is returned through the browser front channel, and it remains useful in code flow to bind the authentication response to the pending request.\u003c/p>\n\u003cp>\u003ccode>prompt\u003c/code> controls interaction behavior. For example, \u003ccode>login\u003c/code> asks for reauthentication, \u003ccode>consent\u003c/code> asks for renewed consent, \u003ccode>none\u003c/code> asks for a silent result, and \u003ccode>select_account\u003c/code> asks the OP to show account choice.\u003c/p>\n\u003cp>\u003ccode>max_age\u003c/code> is an age limit in seconds for the user&#39;s active authentication. If the existing login is too old, the OP must reauthenticate the user and include \u003ccode>auth_time\u003c/code>.\u003c/p>\n\u003cp>\u003ccode>login_hint\u003c/code> is a usability hint, often an email address, username, or issuer-specific identifier. It is not proof of identity and should not bypass authentication.\u003c/p>\n\u003cp>\u003ccode>acr_values\u003c/code> requests one or more authentication context class references. The OP may satisfy, ignore, or reject the request depending on trust framework and policy.\u003c/p>\n\u003cp>\u003ccode>claims\u003c/code> lets the RP ask for specific claims and mark some as essential. It is more precise than scopes but still subject to OP policy and user consent.\u003c/p>\n",
+        "\u003cp>This is the modern default. Tokens are returned through the back channel, and the RP can authenticate at the token endpoint when it is confidential.\u003c/p>\n\u003cp>\u003ccode>/authorize -&gt; code\u003c/code> means the browser only receives a short-lived authorization code. This keeps tokens out of the front-channel URL.\u003c/p>\n\u003cp>\u003ccode>/token -&gt; id_token + optional access_token\u003c/code> means the RP exchanges the code directly with the OP. The ID Token establishes login at the RP; an access token may be used for UserInfo or API access.\u003c/p>\n\u003cp>PKCE is expected for public clients and is commonly used by confidential clients as well. Client authentication still applies when the RP is confidential.\u003c/p>\n",
+        "\u003cp>OIDC does not use OAuth&#39;s bare \u003ccode>token\u003c/code> response type because no ID Token would be returned. Modern security guidance still prefers code flow with PKCE over implicit-style browser token delivery.\u003c/p>\n\u003cp>\u003ccode>id_token\u003c/code> returns an ID Token directly from the authorization endpoint. The RP must validate nonce and signature before creating a session.\u003c/p>\n\u003cp>\u003ccode>id_token token\u003c/code> returns both an ID Token and access token through the browser. This creates more exposure in browser history, logs, scripts, and redirect handling, so it is not the modern default.\u003c/p>\n",
+        "\u003cp>Hybrid flows were designed for clients that need an immediate front-channel authentication result plus later token endpoint exchange. They are more complex and require careful nonce and hash claim validation.\u003c/p>\n\u003cp>\u003ccode>code id_token\u003c/code> returns a code and ID Token at the authorization endpoint. The RP validates the ID Token immediately and later exchanges the code.\u003c/p>\n\u003cp>\u003ccode>code token\u003c/code> returns a code and access token at the authorization endpoint. This is unusual for modern designs and requires access-token hash validation.\u003c/p>\n\u003cp>\u003ccode>code id_token token\u003c/code> returns all three front-channel values. It has the most validation burden because the RP must bind the code and access token to the signed ID Token.\u003c/p>\n",
+        "\u003cp>Do not use an access token as a login assertion. Access tokens are for resource servers. ID Tokens are for the relying party and contain claims about authentication.\u003c/p>\n\u003cp>\u003ccode>issuer\u003c/code> is the OP that authenticated the user and signed the ID Token. The RP must know and trust this issuer.\u003c/p>\n\u003cp>\u003ccode>subject\u003c/code> is the user&#39;s stable identifier at that issuer. The RP should store it with the issuer as \u003ccode>(iss, sub)\u003c/code>.\u003c/p>\n\u003cp>\u003ccode>audience\u003c/code> is the RP client ID. The ID Token is meant for the RP, not for an API.\u003c/p>\n\u003cp>\u003ccode>at this time\u003c/code> is represented by claims such as \u003ccode>iat\u003c/code>, \u003ccode>exp\u003c/code>, and sometimes \u003ccode>auth_time\u003c/code>. The RP must reject stale or expired assertions.\u003c/p>\n",
+        "\u003cp>The OpenID Provider Configuration document is the main OIDC \u003ccode>.well-known\u003c/code> endpoint. It is JSON metadata that lets the RP configure itself from the issuer URL.\u003c/p>\n\u003cp>The issuer identifier in the document must match the issuer the RP intended to use. Discovery should not silently turn one issuer into another.\u003c/p>\n\u003cp>The endpoint list tells the RP where to send authorization requests, token requests, UserInfo requests, and where to fetch public keys for signature validation.\u003c/p>\n\u003cp>Supported scopes, response types, claims, and algorithms help the RP know what the OP can do. They are capability metadata, not a substitute for registration policy.\u003c/p>\n",
+        "\u003cp>OAuth Authorization Server Metadata is related but not identical to OIDC Discovery. It describes OAuth authorization server metadata for OAuth clients and resource servers.\u003c/p>\n\u003cp>It may expose many of the same endpoint locations, such as authorization, token, revocation, introspection, and JWKS metadata.\u003c/p>\n\u003cp>It does not by itself make a server an OpenID Provider because OIDC requires support for OpenID Connect behavior such as \u003ccode>openid\u003c/code> scope, ID Tokens, and OIDC-specific metadata.\u003c/p>\n\u003cp>For OIDC login, the RP should use the OIDC discovery document for the OP it trusts.\u003c/p>\n",
+        "\u003cp>The JWKS endpoint returns a JSON Web Key Set. It is commonly served at a URL like \u003ccode>/jwks.json\u003c/code> or \u003ccode>/keys\u003c/code>, but the authoritative location is the \u003ccode>jwks_uri\u003c/code> value from discovery.\u003c/p>\n\u003cp>It publishes public keys, not private keys. The OP signs ID Tokens with a private key, and RPs verify signatures with the corresponding public key.\u003c/p>\n\u003cp>Each key usually has \u003ccode>kid\u003c/code> for key selection, \u003ccode>kty\u003c/code> for key type, \u003ccode>use\u003c/code> for intended use such as signature, \u003ccode>alg\u003c/code> for algorithm, and key material such as RSA modulus/exponent or elliptic curve coordinates.\u003c/p>\n\u003cp>RPs cache keys for performance and resilience. On key rotation, a token may arrive with an unfamiliar \u003ccode>kid\u003c/code>; the RP should refresh the JWKS and retry key selection before rejecting.\u003c/p>\n",
+        "\u003cp>Signature verification must happen before the RP trusts claims from the payload. The payload is just base64url-encoded JSON until the signature and claims are validated.\u003c/p>\n\u003cp>Read \u003ccode>header.alg\u003c/code> and \u003ccode>header.kid\u003c/code> from the JWT header. Reject \u003ccode>alg=none\u003c/code> unless a very specific profile explicitly allows unsigned ID Tokens, and do not accept algorithms outside the client&#39;s registered or expected set.\u003c/p>\n\u003cp>Select the matching public key from \u003ccode>jwks_uri\u003c/code> using \u003ccode>kid\u003c/code>, key type, intended use, and algorithm. If no key matches, refresh JWKS once to handle rotation.\u003c/p>\n\u003cp>Verify the signature over the exact \u003ccode>header.payload\u003c/code> bytes using the selected key and algorithm. Do not rewrite JSON or reserialize the token before verification.\u003c/p>\n\u003cp>Then validate claims such as \u003ccode>iss\u003c/code>, \u003ccode>aud\u003c/code>, \u003ccode>azp\u003c/code>, \u003ccode>exp\u003c/code>, \u003ccode>iat\u003c/code>, \u003ccode>nonce\u003c/code>, \u003ccode>auth_time\u003c/code>, \u003ccode>acr\u003c/code>, and \u003ccode>amr\u003c/code> according to the request and local policy.\u003c/p>\n",
+        "\u003cp>OIDC Core defines ID Tokens as JWTs. The RP validates the signature using OP keys from discovery or configured metadata, then validates the claims.\u003c/p>\n\u003cp>The header tells the RP which algorithm and key identifier the OP used. It is input to verification, not a trusted result by itself.\u003c/p>\n\u003cp>The payload carries claims about the issuer, subject, audience, times, nonce, and authentication event. These claims are not trusted until signature and claim validation pass.\u003c/p>\n\u003cp>The signature proves the OP signed the header and payload with a private key corresponding to a public key in the OP&#39;s JWKS.\u003c/p>\n",
+        "\u003cp>These are foundational validation claims. \u003ccode>sub\u003c/code> is the stable identifier for the user at this issuer and should be treated as pairwise with \u003ccode>iss\u003c/code>; do not compare subjects across issuers without issuer context.\u003c/p>\n\u003cp>\u003ccode>iss\u003c/code> must exactly match the issuer the RP configured or discovered. Accepting a token from the wrong issuer is a login vulnerability.\u003c/p>\n\u003cp>\u003ccode>sub\u003c/code> identifies the authenticated end user at that issuer. Store and compare it together with \u003ccode>iss\u003c/code>.\u003c/p>\n\u003cp>\u003ccode>aud\u003c/code> must contain the RP&#39;s client ID. If the RP&#39;s client ID is absent, the token was not issued for this RP.\u003c/p>\n\u003cp>\u003ccode>exp\u003c/code> is the expiration timestamp. The RP rejects expired tokens, usually with small clock skew tolerance.\u003c/p>\n\u003cp>\u003ccode>iat\u003c/code> is the issue time. The RP can use it to reject tokens that are implausibly old, too far in the future, or outside local policy.\u003c/p>\n",
+        "\u003cp>If the ID Token has multiple audiences, OIDC Core requires \u003ccode>azp\u003c/code> in some cases so the RP can identify the party to which the token was issued. The RP must reject tokens not intended for its client ID.\u003c/p>\n\u003cp>\u003ccode>aud\u003c/code> is normally the RP&#39;s \u003ccode>client_id\u003c/code>. It can be a single string or an array depending on the token.\u003c/p>\n\u003cp>\u003ccode>azp\u003c/code> is used when the token has multiple audiences and the authorized party needs to be explicit. When present, it should match the RP&#39;s client ID in the cases required by OIDC Core.\u003c/p>\n\u003cp>Do not treat an ID Token as valid just because it has a trusted issuer. The audience check is what prevents a token issued to one RP from being replayed to another RP.\u003c/p>\n",
+        "\u003cp>When \u003ccode>max_age\u003c/code> is requested, the ID Token must include \u003ccode>auth_time\u003c/code>. RPs can also use \u003ccode>auth_time\u003c/code> for local reauthentication policies.\u003c/p>\n\u003cp>\u003ccode>exp\u003c/code> is a hard validity limit. After it passes, the ID Token should not be accepted for login.\u003c/p>\n\u003cp>\u003ccode>iat\u003c/code> supports age and clock checks. A token issued too far in the future or too old for local policy should be rejected.\u003c/p>\n\u003cp>\u003ccode>auth_time\u003c/code> is the time of user authentication at the OP. It is required when \u003ccode>max_age\u003c/code> is used and useful when the RP requires recent login for sensitive actions.\u003c/p>\n",
+        "\u003cp>\u003ccode>c_hash\u003c/code> and \u003ccode>at_hash\u003c/code> matter especially in implicit and hybrid flows where values arrive through the authorization endpoint. They let the RP verify that the code or access token belongs with the signed ID Token.\u003c/p>\n\u003cp>\u003ccode>nonce\u003c/code> is generated by the RP, stored with the pending request, and checked against the ID Token claim.\u003c/p>\n\u003cp>\u003ccode>c_hash\u003c/code> is a hash-derived value for the authorization code. In hybrid flows, it helps prove the code returned through the front channel belongs with the signed ID Token.\u003c/p>\n\u003cp>\u003ccode>at_hash\u003c/code> is a hash-derived value for the access token. In implicit and hybrid flows, it helps prove the access token returned through the front channel belongs with the signed ID Token.\u003c/p>\n",
+        "\u003cp>Request parameters are asks. The ID Token and UserInfo response are the results. The RP must validate required results and handle cases where optional requested claims are absent.\u003c/p>\n\u003cp>\u003ccode>nonce\u003c/code> asks the OP to return the nonce in the ID Token. The RP rejects the token if it does not match the pending request.\u003c/p>\n\u003cp>\u003ccode>max_age\u003c/code> asks for authentication freshness. The resulting \u003ccode>auth_time\u003c/code> lets the RP verify the OP satisfied that freshness requirement.\u003c/p>\n\u003cp>\u003ccode>acr_values\u003c/code> asks for an assurance class. The resulting \u003ccode>acr\u003c/code> is meaningful only within an agreed trust framework.\u003c/p>\n\u003cp>\u003ccode>scope\u003c/code> asks for standard claim groups. The OP may put some claims in the ID Token and others behind UserInfo.\u003c/p>\n\u003cp>\u003ccode>claims\u003c/code> asks for a precise claim set. Essential claims need explicit handling if the OP cannot supply them.\u003c/p>\n",
+        "\u003cp>They are related but not interchangeable. State is returned as an authorization response parameter. Nonce is returned inside the signed ID Token. Use both in browser flows.\u003c/p>\n\u003cp>\u003ccode>state\u003c/code> protects the OAuth redirect response. The RP stores state with the pending browser session and checks the returned authorization response before processing the code or error.\u003c/p>\n\u003cp>\u003ccode>nonce\u003c/code> protects the ID Token. The RP stores nonce with the pending authentication request and checks the ID Token&#39;s signed \u003ccode>nonce\u003c/code> claim after validating the token.\u003c/p>\n\u003cp>Using only \u003ccode>state\u003c/code> does not prove the ID Token was minted for this authentication request. Using only \u003ccode>nonce\u003c/code> does not protect the authorization response routing. Use both.\u003c/p>\n",
+        "\u003cp>The RP stores nonce with the pending authentication request, then checks the ID Token nonce claim after token validation. The value must have enough entropy to resist guessing.\u003c/p>\n\u003cp>\u003ccode>old id_token\u003c/code> represents a validly signed token from an earlier login. Signature validity alone is not enough if the token is being replayed into the wrong browser flow.\u003c/p>\n\u003cp>\u003ccode>wrong browser session\u003c/code> means the callback belongs to a different pending login request than the one that produced the ID Token.\u003c/p>\n\u003cp>\u003ccode>nonce mismatch -&gt; rejected\u003c/code> is the expected outcome. The RP should stop before creating a local session.\u003c/p>\n",
+        "\u003cp>\u003ccode>prompt=none\u003c/code> is used for silent checks and must fail if user interaction is required. \u003ccode>prompt=login\u003c/code> asks the OP to reauthenticate the end user.\u003c/p>\n\u003cp>\u003ccode>prompt=login\u003c/code> asks the OP to actively reauthenticate the user even if an OP session already exists.\u003c/p>\n\u003cp>\u003ccode>prompt=consent\u003c/code> asks the OP to show a consent step again, useful when the RP needs a fresh approval record.\u003c/p>\n\u003cp>\u003ccode>prompt=none\u003c/code> asks the OP to complete silently. If login, consent, or account selection is required, the OP returns an error such as \u003ccode>login_required\u003c/code> or \u003ccode>interaction_required\u003c/code>.\u003c/p>\n\u003cp>\u003ccode>prompt=select_account\u003c/code> asks the OP to let the user choose which account to use, especially when multiple OP sessions are available.\u003c/p>\n",
+        "\u003cp>If the user&#39;s active authentication is older than the allowed age, the OP must attempt active reauthentication. The returned ID Token must include \u003ccode>auth_time\u003c/code>.\u003c/p>\n\u003cp>\u003ccode>max_age=300\u003c/code> is measured in seconds. It means the RP is asking the OP for an authentication event no more than five minutes old.\u003c/p>\n\u003cp>The OP enforces this by checking the user&#39;s current OP session. If it is too old, the OP reauthenticates the user.\u003c/p>\n\u003cp>The RP validates the result using \u003ccode>auth_time\u003c/code>. If \u003ccode>auth_time\u003c/code> is missing when \u003ccode>max_age\u003c/code> was requested, or if the age is too high, the RP should reject the login result.\u003c/p>\n",
+        "\u003cp>The meaning of \u003ccode>acr\u003c/code> values is trust-framework specific. The RP should only require or interpret values it has agreed on with the OP.\u003c/p>\n\u003cp>\u003ccode>acr\u003c/code> stands for Authentication Context Class Reference. It is a label for the class of authentication performed, such as a local level of assurance.\u003c/p>\n\u003cp>The value is not universal. \u003ccode>urn:example:loa:2\u003c/code> only means something if the RP and OP have agreed what that value represents.\u003c/p>\n\u003cp>An RP that requires an \u003ccode>acr\u003c/code> value should check the returned ID Token and decide what to do if the OP returns a different value or no value.\u003c/p>\n",
+        "\u003cp>\u003ccode>amr\u003c/code> is useful for risk decisions but should not be treated as a universal assurance level. Method names are not enough without issuer policy and context.\u003c/p>\n\u003cp>\u003ccode>pwd\u003c/code> indicates password authentication. \u003ccode>otp\u003c/code> indicates a one-time password method. Other OPs may use other values.\u003c/p>\n\u003cp>\u003ccode>amr\u003c/code> can help an RP decide whether step-up is needed, but it does not automatically prove a regulatory assurance level.\u003c/p>\n\u003cp>Interpret \u003ccode>amr\u003c/code> together with \u003ccode>iss\u003c/code>, OP policy, \u003ccode>acr\u003c/code>, \u003ccode>auth_time\u003c/code>, and the RP&#39;s own risk rules.\u003c/p>\n",
+        "\u003cp>The \u003ccode>claims\u003c/code> parameter allows more precise requests than scopes. Essential claims can cause an error if they cannot be supplied, depending on OP behavior and policy.\u003c/p>\n\u003cp>\u003ccode>id_token\u003c/code> tells the OP the RP wants these claims in the ID Token itself, not only from UserInfo.\u003c/p>\n\u003cp>\u003ccode>email_verified\u003c/code> marked as \u003ccode>essential\u003c/code> means the RP considers that claim required for this authentication result.\u003c/p>\n\u003cp>\u003ccode>acr\u003c/code> with \u003ccode>values\u003c/code> asks for one of the listed authentication context values. The OP may satisfy it, return a different value, or fail depending on policy and support.\u003c/p>\n\u003cp>The \u003ccode>claims\u003c/code> parameter is powerful but can be verbose. Use it for claims that are truly required for login decisions, not as a replacement for every profile attribute request.\u003c/p>\n",
+        "\u003cp>Also handle key rotation and clock skew carefully. Validation must happen before creating a local application session.\u003c/p>\n\u003cp>Discover issuer metadata and \u003ccode>jwks_uri\u003c/code> from the trusted issuer. The metadata gives the RP the endpoints and public key location it should use.\u003c/p>\n\u003cp>Validate signature, key, and allowed algorithm before trusting payload claims. Select the JWKS key by \u003ccode>kid\u003c/code> and reject unexpected algorithms.\u003c/p>\n\u003cp>Check \u003ccode>iss\u003c/code>, \u003ccode>aud\u003c/code>, \u003ccode>azp\u003c/code>, \u003ccode>exp\u003c/code>, and \u003ccode>iat\u003c/code> to ensure the token came from the expected issuer, was issued for this RP, and is within the valid time window.\u003c/p>\n\u003cp>Check \u003ccode>nonce\u003c/code> against the pending request to prevent replay into the wrong browser session.\u003c/p>\n\u003cp>Check \u003ccode>auth_time\u003c/code>, \u003ccode>acr\u003c/code>, and \u003ccode>amr\u003c/code> when requested or required by local policy. These claims drive freshness, assurance, and step-up decisions.\u003c/p>\n",
+        "\u003cp>Close by reinforcing separation: access tokens authorize API calls, ID Tokens establish a login session at the relying party.\u003c/p>\n\u003cp>OAuth says what access was delegated to a client. That is why access tokens are intended for resource servers and scopes describe API authority.\u003c/p>\n\u003cp>OIDC says who authenticated and how the RP can verify it. That is why ID Tokens are intended for the RP and carry authentication claims.\u003c/p>\n\u003cp>Discovery and JWKS tell the RP where to validate issuer metadata and signatures. The RP should not trust token claims without first anchoring validation to the expected issuer and key set.\u003c/p>\n\u003cp>\u003ccode>state\u003c/code> protects the redirect; \u003ccode>nonce\u003c/code> protects the ID Token. They solve adjacent but different binding problems.\u003c/p>\n"
       ]
     </script>
     <script src="../../assets/presentation.js"></script>

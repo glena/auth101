@@ -14,13 +14,16 @@
             <h1>OAuth 2 Internals and Security</h1>
           </div>
           <div class="slide-body">
-            <p>This deck opens the authorization server black box.</p>
+            <p>
+              This deck opens the authorization server black box: what gets checked, when it gets checked, and why
+              ordering matters.
+            </p>
             <ul>
-              <li><code>/authorize</code> parsing and validation</li>
-              <li><code>/token</code> parsing and validation</li>
-              <li>Code flow security checkpoints</li>
-              <li>Error routing and redirect URI validation</li>
-              <li>Cookie, state, session, and PKCE binding</li>
+              <li><code>/authorize</code>: parse and validate before user interaction</li>
+              <li><code>/token</code>: authenticate, validate grants, and issue credentials</li>
+              <li>Code flow checkpoints: bind code, client, redirect URI, and PKCE</li>
+              <li>Error routing: redirect only after the target is trusted</li>
+              <li>Browser binding: cookies, state, session, and PKCE connect the flow</li>
             </ul>
             <p>
               <a href="https://www.rfc-editor.org/info/rfc6749">RFC 6749</a> ·
@@ -37,7 +40,9 @@
             <h2><code>/authorize</code> starts with parsing</h2>
           </div>
           <div class="slide-body">
-            <p>Read the request as protocol input, not as trusted app data.</p>
+            <p>
+              Read the request as protocol input, not as trusted app data. Every parameter feeds a later trust decision.
+            </p>
             <pre><code class="language-http">GET /authorize?
   response_type=code&amp;
   client_id=calendar-web&amp;
@@ -55,10 +60,10 @@
           </div>
           <div class="slide-body">
             <ul>
-              <li>Require <code>client_id</code></li>
-              <li>Load registered metadata</li>
-              <li>Check client is active</li>
-              <li>Check grant and response type are allowed</li>
+              <li>Require one <code>client_id</code> to anchor policy</li>
+              <li>Load registered metadata before request-specific checks</li>
+              <li>Check the client is active and not disabled</li>
+              <li>Check this client may use the requested grant and response type</li>
             </ul>
           </div>
         </div>
@@ -71,10 +76,10 @@
           <div class="slide-body">
             <p>Validate before redirecting.</p>
             <ul>
-              <li>Exact match registered URI</li>
-              <li>No open redirect patterns</li>
-              <li>No wildcard surprises</li>
-              <li>Preserve original value for code binding</li>
+              <li>Exact match against one registered URI</li>
+              <li>Reject registered callbacks with open redirect behavior</li>
+              <li>Avoid wildcard host or path matching in production</li>
+              <li>Preserve the validated value for later code binding</li>
             </ul>
           </div>
         </div>
@@ -86,8 +91,8 @@
           </div>
           <div class="slide-body">
             <p>First decide if the client redirect target is trusted.</p>
-            <pre><code class="language-text">valid client + valid redirect_uri -&gt; redirect error
-unknown client or bad redirect_uri -&gt; local error page
+            <pre><code class="language-text">valid client + valid redirect_uri -&gt; redirect OAuth error
+unknown client or bad redirect_uri -&gt; render local error page
 </code></pre>
           </div>
         </div>
@@ -100,10 +105,10 @@ unknown client or bad redirect_uri -&gt; local error page
           <div class="slide-body">
             <p>After redirect URI validation, return OAuth errors to the client.</p>
             <ul>
-              <li><code>error</code></li>
-              <li><code>state</code>, when supplied</li>
-              <li>Optional safe <code>error_description</code></li>
-              <li>Optional stable <code>error_uri</code></li>
+              <li><code>error</code>: stable machine-readable failure code</li>
+              <li><code>state</code>: exact echo when the request supplied it</li>
+              <li><code>error_description</code>: optional safe developer hint</li>
+              <li><code>error_uri</code>: optional stable public documentation link</li>
             </ul>
           </div>
         </div>
@@ -116,10 +121,10 @@ unknown client or bad redirect_uri -&gt; local error page
           <div class="slide-body">
             <p>Do not redirect when the redirect target is not trusted.</p>
             <ul>
-              <li>Missing or invalid <code>client_id</code></li>
-              <li>Missing <code>redirect_uri</code> when required</li>
-              <li>Unregistered or mismatched <code>redirect_uri</code></li>
-              <li>Malformed request before trust is established</li>
+              <li>Missing or invalid <code>client_id</code>: no trusted client record</li>
+              <li>Missing required <code>redirect_uri</code>: no safe return target</li>
+              <li>Mismatched <code>redirect_uri</code>: requested target is untrusted</li>
+              <li>Malformed request: cannot make deterministic trust decisions</li>
             </ul>
           </div>
         </div>
@@ -131,8 +136,8 @@ unknown client or bad redirect_uri -&gt; local error page
           </div>
           <div class="slide-body">
             <p><code>response_type</code> selects the processing branch.</p>
-            <pre><code class="language-text">code   -&gt; issue authorization code
-token  -&gt; legacy implicit token response
+            <pre><code class="language-text">code   -&gt; issue short-lived code for /token exchange
+token  -&gt; legacy implicit token response through browser
 </code></pre>
           </div>
         </div>
@@ -145,10 +150,10 @@ token  -&gt; legacy implicit token response
           <div class="slide-body">
             <p>Validate requested authority.</p>
             <ul>
-              <li>Parse requested scopes</li>
-              <li>Apply client policy</li>
-              <li>Apply user policy</li>
-              <li>Narrow grants when needed</li>
+              <li>Parse requested scopes into known permission tokens</li>
+              <li>Apply client policy before asking the user</li>
+              <li>Apply user and organization policy at consent time</li>
+              <li>Narrow grants to the approved subset when needed</li>
             </ul>
           </div>
         </div>
@@ -159,10 +164,13 @@ token  -&gt; legacy implicit token response
             <h2>Authorize step 5: state</h2>
           </div>
           <div class="slide-body">
-            <p>Return <code>state</code> exactly when it was supplied.</p>
+            <p>
+              Return <code>state</code> exactly when it was supplied so the client can match the callback to a pending
+              request.
+            </p>
             <pre><code class="language-http">Location: https://client.example/cb?
-  code=abc&amp;
-  state=7b3c...
+  code=abc&amp;        # grant handle
+  state=7b3c...    # client correlation value
 </code></pre>
           </div>
         </div>
@@ -173,9 +181,9 @@ token  -&gt; legacy implicit token response
             <h2>Authorize step 6: PKCE inputs</h2>
           </div>
           <div class="slide-body">
-            <p>For code flow, store the challenge with the code.</p>
-            <pre><code class="language-text">code_challenge = BASE64URL(SHA256(code_verifier))
-code_challenge_method = S256
+            <p>For code flow, store the challenge and method with the authorization code.</p>
+            <pre><code class="language-text">code_challenge = BASE64URL(SHA256(code_verifier))  # front-channel proof
+code_challenge_method = S256                       # verification rule
 </code></pre>
           </div>
         </div>
@@ -188,10 +196,10 @@ code_challenge_method = S256
           <div class="slide-body">
             <p>Authenticate the user when policy requires it.</p>
             <ul>
-              <li>Existing session is acceptable only if fresh enough</li>
-              <li>Login method is outside core OAuth</li>
-              <li>Consent may be required</li>
-              <li>Denial is a valid outcome</li>
+              <li>Existing session must satisfy freshness and assurance policy</li>
+              <li>Login method is local authorization-server behavior</li>
+              <li>Consent depends on client, scope, resource, and policy</li>
+              <li>Denial returns <code>access_denied</code> only when redirect is trusted</li>
             </ul>
           </div>
         </div>
@@ -205,11 +213,11 @@ code_challenge_method = S256
             <p>Create a short-lived, one-use code.</p>
             <p>Bind it to:</p>
             <ul>
-              <li>Client ID</li>
-              <li>Redirect URI</li>
-              <li>User and authorization decision</li>
-              <li>Scope and resource</li>
-              <li>PKCE challenge</li>
+              <li>Client ID that initiated the flow</li>
+              <li>Redirect URI validated at <code>/authorize</code></li>
+              <li>User and authorization decision from this interaction</li>
+              <li>Scope and resource actually approved</li>
+              <li>PKCE challenge needed to redeem the code</li>
             </ul>
           </div>
         </div>
@@ -220,10 +228,12 @@ code_challenge_method = S256
             <h2><code>/token</code> starts stricter</h2>
           </div>
           <div class="slide-body">
-            <p>The token endpoint is a back-channel API.</p>
+            <p>
+              The token endpoint is a back-channel API: stricter transport, stricter parsing, and no browser redirects.
+            </p>
             <pre><code class="language-http">POST /token HTTP/1.1
-Content-Type: application/x-www-form-urlencoded
-Authorization: Basic ...
+Content-Type: application/x-www-form-urlencoded  # OAuth form body
+Authorization: Basic ...                         # registered client auth
 </code></pre>
           </div>
         </div>
@@ -235,10 +245,10 @@ Authorization: Basic ...
           </div>
           <div class="slide-body">
             <ul>
-              <li>Require <code>grant_type</code></li>
-              <li>Reject malformed form encoding</li>
-              <li>Reject duplicated security parameters</li>
-              <li>Ignore or reject unsupported extension parameters by policy</li>
+              <li>Require <code>grant_type</code> to choose the validator</li>
+              <li>Reject malformed form encoding before reading fields</li>
+              <li>Reject duplicated security parameters deterministically</li>
+              <li>Ignore or reject extension parameters only by explicit policy</li>
             </ul>
           </div>
         </div>
@@ -251,11 +261,11 @@ Authorization: Basic ...
           <div class="slide-body">
             <p>Match the registered method.</p>
             <ul>
-              <li><code>none</code></li>
-              <li><code>client_secret_basic</code></li>
-              <li><code>client_secret_post</code></li>
-              <li>JWT assertion</li>
-              <li>mTLS or other extension methods</li>
+              <li><code>none</code>: public client, no shared secret</li>
+              <li><code>client_secret_basic</code>: secret in Authorization header</li>
+              <li><code>client_secret_post</code>: secret in form body</li>
+              <li>JWT assertion: signed client authentication</li>
+              <li>mTLS or extensions: sender-constrained authentication</li>
             </ul>
           </div>
         </div>
@@ -266,9 +276,9 @@ Authorization: Basic ...
             <h2>Token step 3: select grant validator</h2>
           </div>
           <div class="slide-body">
-            <pre><code class="language-text">grant_type=authorization_code -&gt; code validator
-grant_type=refresh_token      -&gt; refresh validator
-grant_type=client_credentials -&gt; client validator
+            <pre><code class="language-text">grant_type=authorization_code -&gt; validate code, redirect URI, PKCE
+grant_type=refresh_token      -&gt; validate refresh token and rotation
+grant_type=client_credentials -&gt; validate client-only authorization
 </code></pre>
           </div>
         </div>
@@ -281,10 +291,10 @@ grant_type=client_credentials -&gt; client validator
           <div class="slide-body">
             <p>Find the authorization code record.</p>
             <ul>
-              <li>Exists</li>
-              <li>Not expired</li>
-              <li>Not already used</li>
-              <li>Issued by this authorization server</li>
+              <li>Exists as an authorization code record</li>
+              <li>Not expired according to short code lifetime</li>
+              <li>Not already used in a prior token exchange</li>
+              <li>Issued by this authorization server and environment</li>
             </ul>
           </div>
         </div>
@@ -295,8 +305,8 @@ grant_type=client_credentials -&gt; client validator
             <h2>Code validator: bind the client</h2>
           </div>
           <div class="slide-body">
-            <p>The exchanger must be the original client.</p>
-            <pre><code class="language-text">code.client_id == authenticated_client.id
+            <p>The exchanger must be the original client that received the code.</p>
+            <pre><code class="language-text">code.client_id == authenticated_client.id  # original client only
 </code></pre>
           </div>
         </div>
@@ -307,8 +317,8 @@ grant_type=client_credentials -&gt; client validator
             <h2>Code validator: bind redirect URI</h2>
           </div>
           <div class="slide-body">
-            <p>Compare against the authorize request.</p>
-            <pre><code class="language-text">token.redirect_uri == code.redirect_uri
+            <p>Compare against the redirect URI validated during the authorize request.</p>
+            <pre><code class="language-text">token.redirect_uri == code.redirect_uri  # same callback as /authorize
 </code></pre>
           </div>
         </div>
@@ -319,7 +329,7 @@ grant_type=client_credentials -&gt; client validator
             <h2>Code validator: verify PKCE</h2>
           </div>
           <div class="slide-body">
-            <pre><code class="language-text">BASE64URL(SHA256(code_verifier)) == code_challenge
+            <pre><code class="language-text">BASE64URL(SHA256(code_verifier)) == code_challenge  # proves verifier holder
 </code></pre>
           </div>
         </div>
@@ -332,10 +342,10 @@ grant_type=client_credentials -&gt; client validator
           <div class="slide-body">
             <p>Only after all checks pass:</p>
             <ul>
-              <li>Mark code as consumed</li>
-              <li>Issue access token</li>
-              <li>Optionally issue refresh token</li>
-              <li>Return <code>no-store</code> response headers</li>
+              <li>Mark code as consumed in the same transaction</li>
+              <li>Issue access token from the stored authorization decision</li>
+              <li>Optionally issue refresh token under rotation policy</li>
+              <li>Return <code>no-store</code> headers to prevent token caching</li>
             </ul>
           </div>
         </div>
@@ -348,10 +358,10 @@ grant_type=client_credentials -&gt; client validator
           <div class="slide-body">
             <p>OAuth browser steps rely on local session cookies.</p>
             <ul>
-              <li><code>HttpOnly</code></li>
-              <li><code>Secure</code></li>
-              <li><code>SameSite=Lax</code> or stronger by design</li>
-              <li>Narrow path and domain</li>
+              <li><code>HttpOnly</code>: keep session handles away from scripts</li>
+              <li><code>Secure</code>: send cookies only over HTTPS</li>
+              <li><code>SameSite=Lax</code> or stronger: fit the redirect journey</li>
+              <li>Narrow path and domain: reduce cross-app exposure</li>
             </ul>
           </div>
         </div>
@@ -363,8 +373,8 @@ grant_type=client_credentials -&gt; client validator
           </div>
           <div class="slide-body">
             <p>Store pending request data server-side.</p>
-            <pre><code class="language-text">browser cookie -&gt; pending request id
-pending request -&gt; state, redirect target, code_verifier
+            <pre><code class="language-text">browser cookie -&gt; opaque pending request id
+pending request -&gt; state, redirect target, code_verifier, expiry
 </code></pre>
           </div>
         </div>
@@ -377,10 +387,10 @@ pending request -&gt; state, redirect target, code_verifier
           <div class="slide-body">
             <p><code>state</code> connects the response to the request.</p>
             <ul>
-              <li>CSRF against the callback</li>
-              <li>Login initiation confusion</li>
-              <li>Response injection</li>
-              <li>Accidental tab mix-ups</li>
+              <li>CSRF against the callback: unsolicited response</li>
+              <li>Login initiation confusion: wrong request or issuer</li>
+              <li>Response injection: attacker-supplied code or error</li>
+              <li>Accidental tab mix-ups: concurrent browser flows</li>
             </ul>
           </div>
         </div>
@@ -392,9 +402,9 @@ pending request -&gt; state, redirect target, code_verifier
           </div>
           <div class="slide-body">
             <p>PKCE protects the code in transit.</p>
-            <pre><code class="language-text">attacker gets code
-attacker lacks verifier
-token request fails
+            <pre><code class="language-text">attacker gets code        -&gt; front-channel value leaked
+attacker lacks verifier   -&gt; back-channel proof missing
+token request fails       -&gt; challenge comparison rejects it
 </code></pre>
           </div>
         </div>
@@ -405,11 +415,11 @@ token request fails
             <h2>PKCE flow</h2>
           </div>
           <div class="slide-body">
-            <pre><code class="language-text">1. Client creates code_verifier
-2. Client sends code_challenge at /authorize
-3. Server stores challenge with code
+            <pre><code class="language-text">1. Client creates high-entropy code_verifier
+2. Client sends derived code_challenge at /authorize
+3. Server stores challenge and method with code
 4. Client sends verifier at /token
-5. Server compares verifier to challenge
+5. Server compares derived verifier value to challenge
 </code></pre>
           </div>
         </div>
@@ -422,13 +432,13 @@ token request fails
           <div class="slide-body">
             <p>Fail closed and route errors by endpoint.</p>
             <ul>
-              <li><code>invalid_request</code></li>
-              <li><code>unauthorized_client</code></li>
-              <li><code>access_denied</code></li>
-              <li><code>unsupported_response_type</code></li>
-              <li><code>invalid_scope</code></li>
-              <li><code>invalid_grant</code></li>
-              <li><code>invalid_client</code></li>
+              <li><code>invalid_request</code>: malformed or ambiguous input</li>
+              <li><code>unauthorized_client</code>: client not allowed for this flow</li>
+              <li><code>access_denied</code>: user or policy declined</li>
+              <li><code>unsupported_response_type</code>: response branch unavailable</li>
+              <li><code>invalid_scope</code>: requested authority unacceptable</li>
+              <li><code>invalid_grant</code>: grant failed token validation</li>
+              <li><code>invalid_client</code>: client authentication failed</li>
             </ul>
           </div>
         </div>
@@ -439,8 +449,8 @@ token request fails
             <h2>The mental model</h2>
           </div>
           <div class="slide-body">
-            <p>Authorization endpoint validates the request and creates a bound grant.</p>
-            <p>Token endpoint validates the grant and issues credentials.</p>
+            <p>Authorization endpoint validates the request and creates a bound grant record.</p>
+            <p>Token endpoint validates that grant record and issues credentials.</p>
             <p>Cookies, state, and PKCE bind the browser journey to the back-channel exchange.</p>
           </div>
         </div>
@@ -455,35 +465,35 @@ token request fails
     <div class="progress" aria-hidden="true"><span data-progress></span></div>
     <script type="application/json" id="notes-data">
       [
-        "\u003cp>This deck is implementation-oriented but still specification-driven. OAuth 2.1 is a working-group draft, so cite it as draft-15 and use RFC 6749 plus RFC 9700 as the stable basis.\u003c/p>\n",
-        "\u003cp>The authorization endpoint usually accepts query parameters. Implementations should reject malformed encodings, duplicated parameters when ambiguity matters, unsupported methods if only GET is supported, and unexpected content types for POST variants.\u003c/p>\n",
-        "\u003cp>Do not continue with user interaction until the client is known and authorized to use the requested flow. Client status, allowed redirect URIs, allowed scopes, and allowed authentication methods all come from registration or server policy.\u003c/p>\n",
-        "\u003cp>Loose redirect matching is one of the highest-impact OAuth mistakes. If the redirect URI is invalid, the authorization server must not redirect the browser to it with an error because that can leak data to an attacker-controlled endpoint.\u003c/p>\n",
-        "\u003cp>RFC 6749 makes redirect URI validation the branch point. Once the authorization server can identify the client and validate the redirect URI, it can inform the client through the redirect. Before that point, the server must treat the requested redirect target as untrusted.\u003c/p>\n",
-        "\u003cp>Use this path for user denial (\u003ccode>access_denied\u003c/code>) and validated-client request failures such as \u003ccode>invalid_request\u003c/code>, \u003ccode>unauthorized_client\u003c/code>, \u003ccode>unsupported_response_type\u003c/code>, and \u003ccode>invalid_scope\u003c/code>. For code flow, parameters go in the query component. For legacy implicit flow, parameters go in the fragment component. Return the exact state value if the request included one.\u003c/p>\n",
-        "\u003cp>The page should be for the resource owner, not for client automation. Keep it generic, avoid echoing attacker-supplied URLs as links, and put detailed diagnostics in server logs. This prevents the authorization endpoint from becoming an error-amplifying open redirector.\u003c/p>\n",
-        "\u003cp>Modern security guidance recommends authorization code with PKCE instead of implicit. Reject unsupported combinations and values that are not enabled for the client.\u003c/p>\n",
-        "\u003cp>OAuth allows the authorization server to grant less than requested. If resource indicators or rich authorization requests are supported, validate those as separate structured inputs instead of overloading \u003ccode>scope\u003c/code>.\u003c/p>\n",
-        "\u003cp>The authorization server treats \u003ccode>state\u003c/code> as opaque. The client uses it to bind the authorization response to the browser session and to detect unsolicited or swapped responses.\u003c/p>\n",
-        "\u003cp>PKCE is defined by RFC 7636. Modern guidance requires PKCE for public clients and strongly recommends it more broadly. Prefer \u003ccode>S256\u003c/code>; do not accept \u003ccode>plain\u003c/code> unless legacy compatibility explicitly requires it.\u003c/p>\n",
-        "\u003cp>OAuth does not define how the user logs in. The authorization server owns local authentication, step-up, account selection, and consent policy.\u003c/p>\n",
-        "\u003cp>The code should be high entropy, expire quickly, and be invalidated after successful use. Store only what the token endpoint needs to validate the exchange.\u003c/p>\n",
-        "\u003cp>Require TLS. Accept only intended methods and content types. Token endpoint request bodies contain secrets and grants; avoid logging raw bodies.\u003c/p>\n",
-        "\u003cp>Parameter handling must be deterministic. Ambiguous duplicate \u003ccode>code\u003c/code>, \u003ccode>redirect_uri\u003c/code>, \u003ccode>client_id\u003c/code>, or authentication fields can create request smuggling-style bugs at the application layer.\u003c/p>\n",
-        "\u003cp>The server should enforce exactly the registered authentication method. A confidential client that fails authentication gets \u003ccode>invalid_client\u003c/code>. Public clients still identify themselves with \u003ccode>client_id\u003c/code> when needed.\u003c/p>\n",
-        "\u003cp>Each grant has separate required parameters and validation rules. Do not validate everything through one permissive path.\u003c/p>\n",
-        "\u003cp>Treat missing, expired, reused, and mismatched codes as \u003ccode>invalid_grant\u003c/code>. Reuse may indicate interception; revoke related tokens when policy calls for it.\u003c/p>\n",
-        "\u003cp>For public clients, the authenticated identity may be the \u003ccode>client_id\u003c/code> in the body plus PKCE proof. For confidential clients, it is the authenticated client credentials or assertion.\u003c/p>\n",
-        "\u003cp>This prevents a code issued for one redirect URI from being redeemed under another. RFC 6749 requires \u003ccode>redirect_uri\u003c/code> at the token endpoint when it was present in the authorization request.\u003c/p>\n",
-        "\u003cp>Use constant-time comparison where practical. Reject missing verifier when the code has a stored challenge. Reject wrong method, malformed verifier, or verifier outside the allowed character and length rules.\u003c/p>\n",
-        "\u003cp>Mark the code as consumed transactionally with token issuance. Race conditions can otherwise allow one code to mint multiple token sets.\u003c/p>\n",
-        "\u003cp>The authorization server uses cookies for its own login session. The client may use cookies to remember pending OAuth requests. Cookie attributes are not OAuth parameters, but they are essential to keeping state binding and login sessions intact.\u003c/p>\n",
-        "\u003cp>Prefer storing sensitive request context server-side and putting only an opaque handle in the browser cookie. If data is stored client-side, protect integrity and confidentiality as appropriate.\u003c/p>\n",
-        "\u003cp>Generate high-entropy state per authorization request. Check it before exchanging the code. State does not prove the code belongs to the client; PKCE, redirect URI, and client binding handle that.\u003c/p>\n",
-        "\u003cp>PKCE was created for public clients, especially native apps, where authorization codes could be intercepted. RFC 9700 and OAuth 2.1 make it part of the modern baseline.\u003c/p>\n",
-        "\u003cp>The verifier is never sent through the authorization redirect. That is the security property: the value needed to redeem the code stays with the client until the back-channel token request.\u003c/p>\n",
-        "\u003cp>Use redirect-based errors only when the redirect URI has been validated. Render authorization endpoint errors locally when the client or redirect target is not trustworthy. Use token endpoint JSON errors for token failures. Keep detailed diagnostics in server logs, not browser-visible error descriptions.\u003c/p>\n",
-        "\u003cp>This sets up the attack-vector deck: most OAuth incidents are failures of binding, redirect validation, token handling, or legacy flow choices.\u003c/p>\n"
+        "\u003cp>This deck is implementation-oriented but still specification-driven. OAuth 2.1 is a working-group draft, so cite it as draft-15 and use RFC 6749 plus RFC 9700 as the stable basis.\u003c/p>\n\u003cp>\u003ccode>/authorize\u003c/code>: parse and validate before user interaction. This covers the browser-facing request: the server has to parse parameters deterministically before it knows whether the request is safe to continue or whether it must stop locally.\u003c/p>\n\u003cp>\u003ccode>/token\u003c/code>: authenticate, validate grants, and issue credentials. This covers the back-channel exchange: this is where client authentication, grant validation, and token issuance happen.\u003c/p>\n\u003cp>Code flow checkpoints bind code, client, redirect URI, and PKCE. These checks keep an authorization code from being replayed, swapped, or redeemed by the wrong client.\u003c/p>\n\u003cp>Error routing means redirect only after the target is trusted. Redirect URI validation decides whether an error can safely be returned through the client&#39;s redirect URI or must be shown locally.\u003c/p>\n\u003cp>Browser binding means cookies, state, session, and PKCE connect the flow. These mechanisms explain how browser state is tied to the server-side grant and the token request.\u003c/p>\n",
+        "\u003cp>The authorization endpoint usually accepts query parameters, but the important point is that parsing is part of validation. Do not let framework defaults silently repair or reinterpret protocol input; a browser-facing endpoint still needs strict protocol parsing.\u003c/p>\n\u003cp>For \u003ccode>response_type\u003c/code>, reject unsupported values early because it selects the rest of the endpoint behavior.\u003c/p>\n\u003cp>For \u003ccode>client_id\u003c/code>, require a single unambiguous value because every later policy decision is anchored to the registered client.\u003c/p>\n\u003cp>For \u003ccode>redirect_uri\u003c/code>, parse the value as a URI parameter but do not normalize it into a different target before comparison with registration data.\u003c/p>\n\u003cp>For \u003ccode>scope\u003c/code>, preserve the requested tokens exactly enough to make deterministic authorization and consent decisions.\u003c/p>\n\u003cp>For \u003ccode>state\u003c/code>, treat the value as opaque client data. The authorization server returns it but does not assign meaning to it; the client owns the correlation check.\u003c/p>\n\u003cp>Implementations should reject malformed encodings, duplicated parameters when ambiguity matters, unsupported methods if only GET is supported, and unexpected content types for POST variants.\u003c/p>\n",
+        "\u003cp>Do not continue with user interaction until the client is known and authorized to use the requested flow. Client status, allowed redirect URIs, allowed scopes, and allowed authentication methods all come from registration or server policy.\u003c/p>\n\u003cp>Require one \u003ccode>client_id\u003c/code> to anchor policy because the authorization request cannot be evaluated without knowing which client is asking. Reject missing, duplicated, or malformed values instead of guessing.\u003c/p>\n\u003cp>Load registered metadata before request-specific checks. This metadata controls redirect URIs, allowed response types, allowed grant types, whether PKCE is required, and any tenant or environment restrictions.\u003c/p>\n\u003cp>Check that the client is active and not disabled so deleted, suspended, rotated, or administratively disabled clients cannot continue to initiate flows.\u003c/p>\n\u003cp>Check that this client may use the requested grant and response type. A client registered only for code flow should not be able to opt into implicit or another extension by changing a request parameter.\u003c/p>\n",
+        "\u003cp>Loose redirect matching is one of the highest-impact OAuth mistakes. The redirect URI is not just a return address; it is part of the security boundary for where codes, tokens, and error details are allowed to go.\u003c/p>\n\u003cp>Exact match against one registered URI means compare against the client&#39;s registered redirect URI after normal request parsing, not after helpful normalization that changes meaning. Do not accept prefix matches, suffix matches, mixed-case host surprises, decoded path traversal, query-parameter rewrites, or &quot;same domain&quot; assumptions. If multiple redirect URIs are registered and the request includes \u003ccode>redirect_uri\u003c/code>, the request value has to match one registered value exactly.\u003c/p>\n\u003cp>Reject registered callbacks with open redirect behavior. A registered redirect endpoint should not immediately forward to attacker-controlled URLs through parameters such as \u003ccode>next\u003c/code>, \u003ccode>return_to\u003c/code>, or \u003ccode>url\u003c/code>. Even if the authorization server matched the registered endpoint correctly, an open redirect inside the client can still carry the authorization response somewhere else.\u003c/p>\n\u003cp>Avoid wildcard host or path matching in production. Registrations like \u003ccode>https://*.example.com/callback\u003c/code> or broad path patterns turn redirect validation into a DNS, hosting, and path-ownership problem. If a platform needs many callbacks, prefer explicit registered URIs or a tightly governed dynamic registration process.\u003c/p>\n\u003cp>Preserve the validated value for later code binding. When issuing an authorization code, store the redirect URI value that was validated for this request and require the token request to present the same value when RFC 6749 requires it. This prevents a code issued for one callback from being redeemed through a different callback.\u003c/p>\n\u003cp>If the redirect URI is invalid, the authorization server must not redirect the browser to it with an error because that can leak data to an attacker-controlled endpoint. Show a local error page instead.\u003c/p>\n",
+        "\u003cp>RFC 6749 makes redirect URI validation the branch point. Once the authorization server can identify the client and validate the redirect URI, it can inform the client through the redirect. Before that point, the server must treat the requested redirect target as untrusted.\u003c/p>\n\u003cp>\u003ccode>valid client + valid redirect_uri -&gt; redirect OAuth error\u003c/code> means the server can use the OAuth error response format and send the browser back to the registered client endpoint. This is appropriate for request problems that occur after the return target is trusted.\u003c/p>\n\u003cp>\u003ccode>unknown client or bad redirect_uri -&gt; render local error page\u003c/code> means the server cannot trust the requested return target. In that branch, redirecting would turn the authorization server into a data leak or open redirect helper.\u003c/p>\n\u003cp>The decision should happen before login, consent, or any UI that might reveal account information. A malformed or hostile request should not get to observe user-specific behavior.\u003c/p>\n",
+        "\u003cp>Use this path for user denial (\u003ccode>access_denied\u003c/code>) and validated-client request failures such as \u003ccode>invalid_request\u003c/code>, \u003ccode>unauthorized_client\u003c/code>, \u003ccode>unsupported_response_type\u003c/code>, and \u003ccode>invalid_scope\u003c/code>. For code flow, parameters go in the query component. For legacy implicit flow, parameters go in the fragment component.\u003c/p>\n\u003cp>\u003ccode>error\u003c/code> is the stable machine-readable OAuth failure code. Keep it to the registered vocabulary or extension-defined values so clients can handle it predictably.\u003c/p>\n\u003cp>\u003ccode>state\u003c/code> is an exact echo when the request supplied it. The authorization server should not parse, rewrite, or regenerate it because the client uses it to correlate the response with a pending browser session.\u003c/p>\n\u003cp>\u003ccode>error_description\u003c/code> is an optional safe developer hint and should be safe for a browser URL. Avoid secrets, internal exception text, stack traces, database identifiers, and anything that changes the security decision.\u003c/p>\n\u003cp>\u003ccode>error_uri\u003c/code> is an optional stable public documentation link. It should point to stable documentation, not request-specific diagnostics. Treat it as public help text for developers.\u003c/p>\n",
+        "\u003cp>The page should be for the resource owner, not for client automation. Keep it generic, avoid echoing attacker-supplied URLs as links, and put detailed diagnostics in server logs. This prevents the authorization endpoint from becoming an error-amplifying open redirector.\u003c/p>\n\u003cp>Missing or invalid \u003ccode>client_id\u003c/code> means there is no trusted client record. The server cannot know allowed redirect URIs, allowed response types, or whether the request is from a legitimate integration.\u003c/p>\n\u003cp>Missing \u003ccode>redirect_uri\u003c/code> when required is a trust failure for clients with multiple registered redirect URIs or policies that require an explicit value. The server should not guess where to send the browser.\u003c/p>\n\u003cp>An unregistered or mismatched \u003ccode>redirect_uri\u003c/code> means the requested target is untrusted. Even if the rest of the request looks plausible, returning data to that URI would violate the registered client boundary.\u003c/p>\n\u003cp>Malformed requests before trust is established should stop locally. This includes invalid encoding, ambiguous duplicate parameters, unsupported request shape, or anything else that prevents deterministic validation.\u003c/p>\n",
+        "\u003cp>Modern security guidance recommends authorization code with PKCE instead of implicit. Reject unsupported combinations and values that are not enabled for the client.\u003c/p>\n\u003cp>\u003ccode>code\u003c/code> means the authorization endpoint returns a short-lived authorization code for \u003ccode>/token\u003c/code> exchange. The client must exchange that code at the token endpoint, where the server can authenticate the client, verify PKCE, and enforce code binding.\u003c/p>\n\u003cp>\u003ccode>token\u003c/code> means the legacy implicit flow returns an access token through the browser redirect. New designs should avoid it because browser delivery exposes tokens to more places and skips the back-channel validation step.\u003c/p>\n\u003cp>Treat \u003ccode>response_type\u003c/code> as a branch selector, not as a loose string. Extension values are possible, but only when the authorization server implements them and the client is allowed to use them.\u003c/p>\n",
+        "\u003cp>OAuth allows the authorization server to grant less than requested. If resource indicators or rich authorization requests are supported, validate those as separate structured inputs instead of overloading \u003ccode>scope\u003c/code>.\u003c/p>\n\u003cp>Parse requested scopes into known permission tokens according to the server&#39;s scope syntax and reject malformed or unknown values by policy. Do not treat scope strings as free-form text after this point.\u003c/p>\n\u003cp>Apply client policy before asking the user. Some clients may be limited to certain APIs, tenants, environments, or low-risk scopes regardless of what the user approves.\u003c/p>\n\u003cp>Apply user and organization policy at consent time. The resource owner may lack authority for a requested resource, or organization policy may require step-up, admin approval, or denial.\u003c/p>\n\u003cp>Narrow grants to the approved subset when needed. The response can represent the approved subset, but the server must be clear about what was actually granted so the client does not assume broader access.\u003c/p>\n",
+        "\u003cp>The authorization server treats \u003ccode>state\u003c/code> as opaque. The client uses it to bind the authorization response to the browser session and to detect unsolicited or swapped responses.\u003c/p>\n\u003cp>Return \u003ccode>state\u003c/code> exactly when supplied so the client can match the callback to a pending request. Exact means the same bytes after normal parameter decoding and response encoding, not a normalized JSON object or a server-generated replacement.\u003c/p>\n\u003cp>The example \u003ccode>code\u003c/code> is the server-created grant handle. It should be separate from \u003ccode>state\u003c/code>; the client should not infer authorization success from state alone.\u003c/p>\n\u003cp>The example \u003ccode>state\u003c/code> is the client&#39;s correlation value. A missing or mismatched state at the client callback should stop the client before it exchanges the code.\u003c/p>\n",
+        "\u003cp>PKCE is defined by RFC 7636. Modern guidance requires PKCE for public clients and strongly recommends it more broadly. Prefer \u003ccode>S256\u003c/code>; do not accept \u003ccode>plain\u003c/code> unless legacy compatibility explicitly requires it.\u003c/p>\n\u003cp>\u003ccode>code_challenge\u003c/code> is the transformed front-channel proof sent through the browser-facing authorization request. Store it with the authorization code so it can be checked later at the token endpoint.\u003c/p>\n\u003cp>\u003ccode>BASE64URL(SHA256(code_verifier))\u003c/code> is the \u003ccode>S256\u003c/code> transformation. Use unpadded base64url encoding and compare against the stored challenge according to the method recorded with the request.\u003c/p>\n\u003cp>\u003ccode>code_challenge_method\u003c/code> is the verification rule that tells the server how to verify the later \u003ccode>code_verifier\u003c/code>. Reject missing or unsupported methods according to client and server policy instead of guessing.\u003c/p>\n",
+        "\u003cp>OAuth does not define how the user logs in. The authorization server owns local authentication, step-up, account selection, and consent policy.\u003c/p>\n\u003cp>An existing session must satisfy freshness and assurance policy. Sensitive scopes may require recent authentication even when the user has a valid session cookie.\u003c/p>\n\u003cp>The login method is local authorization-server behavior and outside core OAuth. Passwords, passkeys, federation, MFA, and device posture are authorization-server concerns, not OAuth protocol parameters.\u003c/p>\n\u003cp>Consent depends on client, scope, resource, and policy. It may be required depending on client trust, requested scope, prior grants, and organization policy. Consent is a policy decision, not a substitute for protocol validation.\u003c/p>\n\u003cp>Denial returns \u003ccode>access_denied\u003c/code> only when redirect is trusted. If the redirect URI is not trusted, show the denial or failure locally without redirecting to an untrusted target.\u003c/p>\n",
+        "\u003cp>The code should be high entropy, expire quickly, and be invalidated after successful use. Store only what the token endpoint needs to validate the exchange.\u003c/p>\n\u003cp>Bind the code to the client ID that initiated the flow so another client cannot redeem it even if it learns the code value.\u003c/p>\n\u003cp>Bind the code to the redirect URI validated at \u003ccode>/authorize\u003c/code>. The token endpoint can then reject attempts to redeem the same code under a different callback.\u003c/p>\n\u003cp>Bind the code to the user and authorization decision from this interaction so token issuance reflects the actual authenticated subject, approved scopes, denied scopes, and consent result.\u003c/p>\n\u003cp>Bind the code to the scope and resource actually approved so the token endpoint does not recompute authorization from a looser or attacker-supplied token request.\u003c/p>\n\u003cp>Bind the code to the PKCE challenge needed to redeem the code so a stolen code is not enough to get tokens without the verifier kept by the legitimate client.\u003c/p>\n",
+        "\u003cp>Require TLS. Accept only intended methods and content types. Token endpoint request bodies contain secrets and grants; avoid logging raw bodies.\u003c/p>\n\u003cp>\u003ccode>POST /token\u003c/code> matters because token requests carry credentials and grant material in the request body. Do not support accidental GET behavior that leaks values into URLs, caches, or logs.\u003c/p>\n\u003cp>\u003ccode>Content-Type: application/x-www-form-urlencoded\u003c/code> is the normal OAuth token request encoding and signals the OAuth form body. Reject JSON or multipart requests unless a specific extension intentionally supports them.\u003c/p>\n\u003cp>\u003ccode>Authorization: Basic ...\u003c/code> is one common registered client authentication method. It must be checked against the client&#39;s registered authentication method instead of accepted as merely one possible hint.\u003c/p>\n",
+        "\u003cp>Parameter handling must be deterministic. Ambiguous duplicate \u003ccode>code\u003c/code>, \u003ccode>redirect_uri\u003c/code>, \u003ccode>client_id\u003c/code>, or authentication fields can create request smuggling-style bugs at the application layer.\u003c/p>\n\u003cp>Require \u003ccode>grant_type\u003c/code> to choose the validator because it selects the required parameter set. A token endpoint request without it has no well-defined semantics.\u003c/p>\n\u003cp>Reject malformed form encoding before reading fields. Different parsers can otherwise disagree about the same request body.\u003c/p>\n\u003cp>Reject duplicated security parameters deterministically, including \u003ccode>code\u003c/code>, \u003ccode>redirect_uri\u003c/code>, \u003ccode>client_id\u003c/code>, \u003ccode>client_secret\u003c/code>, \u003ccode>code_verifier\u003c/code>, and \u003ccode>grant_type\u003c/code>. First-value and last-value behavior should not decide security.\u003c/p>\n\u003cp>Ignore or reject extension parameters only by explicit policy. Rejecting is simpler and safer; ignoring can be acceptable only when the extension model and logging make that behavior intentional.\u003c/p>\n",
+        "\u003cp>The server should enforce exactly the registered authentication method. A confidential client that fails authentication gets \u003ccode>invalid_client\u003c/code>. Public clients still identify themselves with \u003ccode>client_id\u003c/code> when needed.\u003c/p>\n\u003cp>\u003ccode>none\u003c/code> is for a public client with no shared secret. It is not failed authentication; it is a registered client type that relies on other checks such as PKCE and redirect URI binding.\u003c/p>\n\u003cp>\u003ccode>client_secret_basic\u003c/code> sends the secret in the Authorization header. Prefer it over body secrets when a shared secret is used, and reject simultaneous body credentials.\u003c/p>\n\u003cp>\u003ccode>client_secret_post\u003c/code> sends the secret in the form body. Support it only for clients registered to use it because request bodies are more likely to be logged by application tooling.\u003c/p>\n\u003cp>JWT assertion methods authenticate the client with a signed assertion. Validate issuer, subject, audience, expiry, signature, and replay protection according to the registered key material.\u003c/p>\n\u003cp>mTLS or extension methods sender-constrain authentication to a certificate, key, or external mechanism. Enforce the extension&#39;s binding rules instead of reducing it to a client ID lookup.\u003c/p>\n",
+        "\u003cp>Each grant has separate required parameters and validation rules. Do not validate everything through one permissive path.\u003c/p>\n\u003cp>\u003ccode>grant_type=authorization_code\u003c/code> validates code, redirect URI, and PKCE. It requires the authorization code, client binding, redirect URI binding when applicable, and PKCE verification when present or required.\u003c/p>\n\u003cp>\u003ccode>grant_type=refresh_token\u003c/code> validates the refresh token and rotation state. It checks status, client binding, scope narrowing, and revocation policy.\u003c/p>\n\u003cp>\u003ccode>grant_type=client_credentials\u003c/code> validates client-only authorization. It issues tokens for the client itself, not for a resource owner, and should be limited to scopes the client is allowed to hold directly.\u003c/p>\n\u003cp>Unknown grant types should fail cleanly. Extension grants need explicit implementation and registration policy.\u003c/p>\n",
+        "\u003cp>Treat missing, expired, reused, and mismatched codes as \u003ccode>invalid_grant\u003c/code>. Reuse may indicate interception; revoke related tokens when policy calls for it.\u003c/p>\n\u003cp>Exists as an authorization code record means the submitted code resolves to a real authorization code record issued by this server. Do not reveal whether a specific code was ever valid.\u003c/p>\n\u003cp>Not expired according to short code lifetime means the code is still inside its allowed validity window. Authorization codes should usually live for minutes, not hours.\u003c/p>\n\u003cp>Not already used in a prior token exchange enforces one-time use. Marking a code consumed should be atomic with token issuance to prevent parallel redemption.\u003c/p>\n\u003cp>Issued by this authorization server and environment prevents cross-issuer confusion and stale environment mix-ups. Codes from another issuer, tenant, region, or environment should not validate.\u003c/p>\n",
+        "\u003cp>For public clients, the authenticated identity may be the \u003ccode>client_id\u003c/code> in the body plus PKCE proof. For confidential clients, it is the authenticated client credentials or assertion.\u003c/p>\n\u003cp>\u003ccode>code.client_id\u003c/code> is the original client that started the authorization request and received the authorization code.\u003c/p>\n\u003cp>\u003ccode>authenticated_client.id\u003c/code> is the client identity established at the token endpoint. For confidential clients, it comes from successful authentication; for public clients, it comes from the submitted \u003ccode>client_id\u003c/code> and must still match the stored code.\u003c/p>\n\u003cp>The comparison prevents code substitution between clients. A malicious client should not be able to trick a legitimate client or user into producing a code and then redeem it as itself.\u003c/p>\n",
+        "\u003cp>This prevents a code issued for one redirect URI from being redeemed under another. RFC 6749 requires \u003ccode>redirect_uri\u003c/code> at the token endpoint when it was present in the authorization request.\u003c/p>\n\u003cp>\u003ccode>token.redirect_uri\u003c/code> is the value supplied in the token request and should be the same callback as \u003ccode>/authorize\u003c/code>. It should be parsed deterministically and compared to the stored value, not reselected from the client&#39;s registration list.\u003c/p>\n\u003cp>\u003ccode>code.redirect_uri\u003c/code> is the original redirect URI value validated at the authorization endpoint and stored with the code.\u003c/p>\n\u003cp>If the authorization request omitted \u003ccode>redirect_uri\u003c/code> because the client had exactly one registered value and policy allowed omission, store the effective redirect URI decision so later validation remains explicit.\u003c/p>\n",
+        "\u003cp>Use constant-time comparison where practical. Reject missing verifier when the code has a stored challenge. Reject wrong method, malformed verifier, or verifier outside the allowed character and length rules.\u003c/p>\n\u003cp>\u003ccode>code_verifier\u003c/code> is the secret value held by the client until the token request and proves the requester is the verifier holder. It should have enough entropy and satisfy the RFC 7636 length and character rules.\u003c/p>\n\u003cp>\u003ccode>BASE64URL(SHA256(code_verifier))\u003c/code> is recomputed by the token endpoint when the stored method is \u003ccode>S256\u003c/code>.\u003c/p>\n\u003cp>\u003ccode>code_challenge\u003c/code> is the stored value from the authorization request. The token endpoint compares the recomputed challenge to this stored value and rejects mismatches as \u003ccode>invalid_grant\u003c/code>.\u003c/p>\n",
+        "\u003cp>Mark the code as consumed transactionally with token issuance. Race conditions can otherwise allow one code to mint multiple token sets.\u003c/p>\n\u003cp>Mark code as consumed in the same transaction, before or atomically with successful token persistence. If token issuance fails, the system needs a clear retry policy that does not reopen replay windows.\u003c/p>\n\u003cp>Issue an access token from the stored authorization decision only after every grant, client, redirect, and PKCE check succeeds. The token should reflect the stored authorization decision, not new request parameters.\u003c/p>\n\u003cp>Optionally issue a refresh token under rotation policy when the client type, grant, scope, and policy allow long-lived access. Apply rotation or sender-constraining where appropriate.\u003c/p>\n\u003cp>Return \u003ccode>no-store\u003c/code> headers to prevent token caching by intermediaries and browser tooling.\u003c/p>\n",
+        "\u003cp>The authorization server uses cookies for its own login session. The client may use cookies to remember pending OAuth requests. Cookie attributes are not OAuth parameters, but they are essential to keeping state binding and login sessions intact.\u003c/p>\n\u003cp>\u003ccode>HttpOnly\u003c/code> keeps session handles away from scripts and reduces exposure to script access. It is useful for session cookies and opaque pending-request handles that JavaScript does not need to read.\u003c/p>\n\u003cp>\u003ccode>Secure\u003c/code> sends cookies only over HTTPS. OAuth deployments should treat non-TLS browser hops as out of bounds for production.\u003c/p>\n\u003cp>\u003ccode>SameSite=Lax\u003c/code> or stronger should fit the redirect journey. This helps limit cross-site cookie sending while still allowing common top-level redirect flows. Test stricter settings against the actual login and callback journey.\u003c/p>\n\u003cp>Narrow path and domain settings reduce cross-app exposure by limiting where cookies are sent. Avoid broad parent-domain cookies when separate apps or tenants share the same registrable domain.\u003c/p>\n",
+        "\u003cp>Prefer storing sensitive request context server-side and putting only an opaque handle in the browser cookie. If data is stored client-side, protect integrity and confidentiality as appropriate.\u003c/p>\n\u003cp>\u003ccode>browser cookie -&gt; opaque pending request id\u003c/code> means the browser stores only a random handle. Losing that handle should not reveal scopes, redirect targets, verifier values, or user decisions.\u003c/p>\n\u003cp>\u003ccode>pending request -&gt; state, redirect target, code_verifier, expiry\u003c/code> means the server-side record carries the sensitive correlation data. The client checks this record when the callback arrives and expires it when the flow is too old.\u003c/p>\n\u003cp>Store enough context to reject swapped callbacks: issuer, client configuration, redirect target, state, PKCE verifier or challenge as appropriate, and expiration.\u003c/p>\n",
+        "\u003cp>Generate high-entropy state per authorization request. Check it before exchanging the code. State does not prove the code belongs to the client; PKCE, redirect URI, and client binding handle that.\u003c/p>\n\u003cp>CSRF against the callback means an unsolicited response. It is the classic state threat: an attacker tries to cause the client to process a response the user did not initiate in that browser session.\u003c/p>\n\u003cp>Login initiation confusion means the wrong request or issuer is being completed. It happens when a response from one login attempt is attached to another user action, account, issuer, or tenant.\u003c/p>\n\u003cp>Response injection means an attacker-supplied code or error reaches the callback. State helps the client reject unsolicited responses before token exchange.\u003c/p>\n\u003cp>Accidental tab mix-ups are concurrent browser flows. They are common in real browsers, and per-request state lets the client distinguish two simultaneous authorization attempts from the same user.\u003c/p>\n",
+        "\u003cp>PKCE was created for public clients, especially native apps, where authorization codes could be intercepted. RFC 9700 and OAuth 2.1 make it part of the modern baseline.\u003c/p>\n\u003cp>\u003ccode>attacker gets code -&gt; front-channel value leaked\u003c/code> models interception through a custom URI scheme, malicious app link handler, browser history exposure, logs, or another place the front-channel response can be observed.\u003c/p>\n\u003cp>\u003ccode>attacker lacks verifier -&gt; back-channel proof missing\u003c/code> is the core protection. The verifier was created by the legitimate client and was not sent through the authorization redirect.\u003c/p>\n\u003cp>\u003ccode>token request fails -&gt; challenge comparison rejects it\u003c/code> because the authorization server recomputes the challenge from the submitted verifier and compares it to the value stored with the code.\u003c/p>\n",
+        "\u003cp>The verifier is never sent through the authorization redirect. That is the security property: the value needed to redeem the code stays with the client until the back-channel token request.\u003c/p>\n\u003cp>Step 1 creates a high-entropy \u003ccode>code_verifier\u003c/code> before the browser leaves the client.\u003c/p>\n\u003cp>Step 2 sends only the derived \u003ccode>code_challenge\u003c/code> and method to \u003ccode>/authorize\u003c/code>, so the front channel does not expose the verifier.\u003c/p>\n\u003cp>Step 3 stores the challenge and method with the authorization code record, binding this code to that future proof.\u003c/p>\n\u003cp>Step 4 sends the verifier at \u003ccode>/token\u003c/code>, over the back channel together with the authorization code and client identity.\u003c/p>\n\u003cp>Step 5 compares the derived verifier value to the stored challenge. A mismatch means the requester may have the code but not the original proof.\u003c/p>\n",
+        "\u003cp>Use redirect-based errors only when the redirect URI has been validated. Render authorization endpoint errors locally when the client or redirect target is not trustworthy. Use token endpoint JSON errors for token failures. Keep detailed diagnostics in server logs, not browser-visible error descriptions.\u003c/p>\n\u003cp>\u003ccode>invalid_request\u003c/code> covers malformed or ambiguous input: malformed, missing, duplicated, or otherwise invalid parameters.\u003c/p>\n\u003cp>\u003ccode>unauthorized_client\u003c/code> means the client is not allowed for this flow: the client is known but not allowed to use the requested flow, response type, or grant.\u003c/p>\n\u003cp>\u003ccode>access_denied\u003c/code> means the user or policy declined. It is the normal result when the resource owner or authorization policy declines the request.\u003c/p>\n\u003cp>\u003ccode>unsupported_response_type\u003c/code> means the response branch is unavailable: the authorization server or this client does not support the requested \u003ccode>response_type\u003c/code>.\u003c/p>\n\u003cp>\u003ccode>invalid_scope\u003c/code> means the requested authority is unacceptable: the requested scope is unknown, malformed, disallowed, or otherwise unacceptable.\u003c/p>\n\u003cp>\u003ccode>invalid_grant\u003c/code> means the grant failed token validation. It is used at the token endpoint for bad authorization codes, refresh tokens, expired grants, reused grants, redirect URI mismatches, and similar grant-validation failures.\u003c/p>\n\u003cp>\u003ccode>invalid_client\u003c/code> means client authentication failed or is missing for a client that must authenticate.\u003c/p>\n",
+        "\u003cp>This sets up the attack-vector deck: most OAuth incidents are failures of binding, redirect validation, token handling, or legacy flow choices.\u003c/p>\n\u003cp>The authorization endpoint validates the request and creates a bound grant record. It should leave behind a compact record that says who asked, which user approved, which redirect target was used, which scope and resource were approved, and which PKCE challenge applies.\u003c/p>\n\u003cp>The token endpoint validates that grant record and issues credentials. It should not trust fresh browser-facing inputs to recreate the authorization decision.\u003c/p>\n\u003cp>Cookies, state, and PKCE bind the browser journey to the back-channel exchange. Cookies keep local session and pending-request context, state correlates the callback, and PKCE proves the token requester is the client that started the flow.\u003c/p>\n"
       ]
     </script>
     <script src="../../assets/presentation.js"></script>
