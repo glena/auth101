@@ -1,6 +1,6 @@
 ---
 title: OAuth 2 Internals and Security
-description: Step-by-step authorization and token endpoint processing, code flow validation, cookie and state binding, and PKCE security.
+description: Step-by-step authorization and token endpoint processing, code flow validation, error handling, cookie and state binding, and PKCE security.
 status: draft
 order: 3
 resources:
@@ -21,6 +21,7 @@ This deck opens the authorization server black box.
 - `/authorize` parsing and validation
 - `/token` parsing and validation
 - Code flow security checkpoints
+- Error routing and redirect URI validation
 - Cookie, state, session, and PKCE binding
 
 [RFC 6749](https://www.rfc-editor.org/info/rfc6749) · [RFC 7636](https://www.rfc-editor.org/info/rfc7636) · [RFC 9700](https://www.rfc-editor.org/info/rfc9700) · [OAuth 2.1 draft-15](https://datatracker.ietf.org/doc/draft-ietf-oauth-v2-1/15/)
@@ -74,6 +75,51 @@ Validate before redirecting.
 
 ::: notes
 Loose redirect matching is one of the highest-impact OAuth mistakes. If the redirect URI is invalid, the authorization server must not redirect the browser to it with an error because that can leak data to an attacker-controlled endpoint.
+:::
+
+---
+
+## Error routing decision
+
+First decide if the client redirect target is trusted.
+
+```text
+valid client + valid redirect_uri -> redirect error
+unknown client or bad redirect_uri -> local error page
+```
+
+::: notes
+RFC 6749 makes redirect URI validation the branch point. Once the authorization server can identify the client and validate the redirect URI, it can inform the client through the redirect. Before that point, the server must treat the requested redirect target as untrusted.
+:::
+
+---
+
+## Return through `redirect_uri`
+
+After redirect URI validation, return OAuth errors to the client.
+
+- `error`
+- `state`, when supplied
+- Optional safe `error_description`
+- Optional stable `error_uri`
+
+::: notes
+Use this path for user denial (`access_denied`) and validated-client request failures such as `invalid_request`, `unauthorized_client`, `unsupported_response_type`, and `invalid_scope`. For code flow, parameters go in the query component. For legacy implicit flow, parameters go in the fragment component. Return the exact state value if the request included one.
+:::
+
+---
+
+## Render a local error page
+
+Do not redirect when the redirect target is not trusted.
+
+- Missing or invalid `client_id`
+- Missing `redirect_uri` when required
+- Unregistered or mismatched `redirect_uri`
+- Malformed request before trust is established
+
+::: notes
+The page should be for the resource owner, not for client automation. Keep it generic, avoid echoing attacker-supplied URLs as links, and put detailed diagnostics in server logs. This prevents the authorization endpoint from becoming an error-amplifying open redirector.
 :::
 
 ---
@@ -380,7 +426,7 @@ The verifier is never sent through the authorization redirect. That is the secur
 
 ## Security failure posture
 
-Fail closed and return OAuth errors.
+Fail closed and route errors by endpoint.
 
 - `invalid_request`
 - `unauthorized_client`
@@ -391,7 +437,7 @@ Fail closed and return OAuth errors.
 - `invalid_client`
 
 ::: notes
-Use redirect-based errors only when the redirect URI has been validated. Use token endpoint JSON errors for token failures. Keep detailed diagnostics in server logs, not browser-visible error descriptions.
+Use redirect-based errors only when the redirect URI has been validated. Render authorization endpoint errors locally when the client or redirect target is not trustworthy. Use token endpoint JSON errors for token failures. Keep detailed diagnostics in server logs, not browser-visible error descriptions.
 :::
 
 ---
