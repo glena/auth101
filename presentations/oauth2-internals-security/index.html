@@ -10,8 +10,11 @@
   <main class="deck" data-deck="oauth2-internals-security" data-title="OAuth 2 Internals and Security">
     <section class="slide" aria-label="OAuth 2 Internals and Security" data-slide="1">
       <div class="slide-content">
-        <h1>OAuth 2 Internals and Security</h1>
-<p>This deck opens the authorization server black box.</p>
+        <div class="slide-title">
+          <h1>OAuth 2 Internals and Security</h1>
+        </div>
+        <div class="slide-body">
+          <p>This deck opens the authorization server black box.</p>
 <ul>
 <li><code>/authorize</code> parsing and validation</li>
 <li><code>/token</code> parsing and validation</li>
@@ -20,12 +23,16 @@
 <li>Cookie, state, session, and PKCE binding</li>
 </ul>
 <p><a href="https://www.rfc-editor.org/info/rfc6749">RFC 6749</a> · <a href="https://www.rfc-editor.org/info/rfc7636">RFC 7636</a> · <a href="https://www.rfc-editor.org/info/rfc9700">RFC 9700</a> · <a href="https://datatracker.ietf.org/doc/draft-ietf-oauth-v2-1/15/">OAuth 2.1 draft-15</a></p>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="/authorize starts with parsing" data-slide="2">
       <div class="slide-content">
-        <h2><code>/authorize</code> starts with parsing</h2>
-<p>Read the request as protocol input, not as trusted app data.</p>
+        <div class="slide-title">
+          <h2><code>/authorize</code> starts with parsing</h2>
+        </div>
+        <div class="slide-body">
+          <p>Read the request as protocol input, not as trusted app data.</p>
 <pre><code class="language-http">GET /authorize?
   response_type=code&amp;
   client_id=calendar-web&amp;
@@ -33,120 +40,164 @@
   scope=calendar.read&amp;
   state=7b3c...
 </code></pre>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="Authorize step 1: client lookup" data-slide="3">
       <div class="slide-content">
-        <h2>Authorize step 1: client lookup</h2>
-<ul>
+        <div class="slide-title">
+          <h2>Authorize step 1: client lookup</h2>
+        </div>
+        <div class="slide-body">
+          <ul>
 <li>Require <code>client_id</code></li>
 <li>Load registered metadata</li>
 <li>Check client is active</li>
 <li>Check grant and response type are allowed</li>
 </ul>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="Authorize step 2: redirect URI" data-slide="4">
       <div class="slide-content">
-        <h2>Authorize step 2: redirect URI</h2>
-<p>Validate before redirecting.</p>
+        <div class="slide-title">
+          <h2>Authorize step 2: redirect URI</h2>
+        </div>
+        <div class="slide-body">
+          <p>Validate before redirecting.</p>
 <ul>
 <li>Exact match registered URI</li>
 <li>No open redirect patterns</li>
 <li>No wildcard surprises</li>
 <li>Preserve original value for code binding</li>
 </ul>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="Error routing decision" data-slide="5">
       <div class="slide-content">
-        <h2>Error routing decision</h2>
-<p>First decide if the client redirect target is trusted.</p>
+        <div class="slide-title">
+          <h2>Error routing decision</h2>
+        </div>
+        <div class="slide-body">
+          <p>First decide if the client redirect target is trusted.</p>
 <pre><code class="language-text">valid client + valid redirect_uri -&gt; redirect error
 unknown client or bad redirect_uri -&gt; local error page
 </code></pre>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="Return through redirecturi" data-slide="6">
       <div class="slide-content">
-        <h2>Return through <code>redirect_uri</code></h2>
-<p>After redirect URI validation, return OAuth errors to the client.</p>
+        <div class="slide-title">
+          <h2>Return through <code>redirect_uri</code></h2>
+        </div>
+        <div class="slide-body">
+          <p>After redirect URI validation, return OAuth errors to the client.</p>
 <ul>
 <li><code>error</code></li>
 <li><code>state</code>, when supplied</li>
 <li>Optional safe <code>error_description</code></li>
 <li>Optional stable <code>error_uri</code></li>
 </ul>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="Render a local error page" data-slide="7">
       <div class="slide-content">
-        <h2>Render a local error page</h2>
-<p>Do not redirect when the redirect target is not trusted.</p>
+        <div class="slide-title">
+          <h2>Render a local error page</h2>
+        </div>
+        <div class="slide-body">
+          <p>Do not redirect when the redirect target is not trusted.</p>
 <ul>
 <li>Missing or invalid <code>client_id</code></li>
 <li>Missing <code>redirect_uri</code> when required</li>
 <li>Unregistered or mismatched <code>redirect_uri</code></li>
 <li>Malformed request before trust is established</li>
 </ul>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="Authorize step 3: response type" data-slide="8">
       <div class="slide-content">
-        <h2>Authorize step 3: response type</h2>
-<p><code>response_type</code> selects the processing branch.</p>
+        <div class="slide-title">
+          <h2>Authorize step 3: response type</h2>
+        </div>
+        <div class="slide-body">
+          <p><code>response_type</code> selects the processing branch.</p>
 <pre><code class="language-text">code   -&gt; issue authorization code
 token  -&gt; legacy implicit token response
 </code></pre>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="Authorize step 4: scope and resource" data-slide="9">
       <div class="slide-content">
-        <h2>Authorize step 4: scope and resource</h2>
-<p>Validate requested authority.</p>
+        <div class="slide-title">
+          <h2>Authorize step 4: scope and resource</h2>
+        </div>
+        <div class="slide-body">
+          <p>Validate requested authority.</p>
 <ul>
 <li>Parse requested scopes</li>
 <li>Apply client policy</li>
 <li>Apply user policy</li>
 <li>Narrow grants when needed</li>
 </ul>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="Authorize step 5: state" data-slide="10">
       <div class="slide-content">
-        <h2>Authorize step 5: state</h2>
-<p>Return <code>state</code> exactly when it was supplied.</p>
+        <div class="slide-title">
+          <h2>Authorize step 5: state</h2>
+        </div>
+        <div class="slide-body">
+          <p>Return <code>state</code> exactly when it was supplied.</p>
 <pre><code class="language-http">Location: https://client.example/cb?
   code=abc&amp;
   state=7b3c...
 </code></pre>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="Authorize step 6: PKCE inputs" data-slide="11">
       <div class="slide-content">
-        <h2>Authorize step 6: PKCE inputs</h2>
-<p>For code flow, store the challenge with the code.</p>
+        <div class="slide-title">
+          <h2>Authorize step 6: PKCE inputs</h2>
+        </div>
+        <div class="slide-body">
+          <p>For code flow, store the challenge with the code.</p>
 <pre><code class="language-text">code_challenge = BASE64URL(SHA256(code_verifier))
 code_challenge_method = S256
 </code></pre>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="Authorize step 7: user session" data-slide="12">
       <div class="slide-content">
-        <h2>Authorize step 7: user session</h2>
-<p>Authenticate the user when policy requires it.</p>
+        <div class="slide-title">
+          <h2>Authorize step 7: user session</h2>
+        </div>
+        <div class="slide-body">
+          <p>Authenticate the user when policy requires it.</p>
 <ul>
 <li>Existing session is acceptable only if fresh enough</li>
 <li>Login method is outside core OAuth</li>
 <li>Consent may be required</li>
 <li>Denial is a valid outcome</li>
 </ul>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="Authorize step 8: issue the result" data-slide="13">
       <div class="slide-content">
-        <h2>Authorize step 8: issue the result</h2>
-<p>Create a short-lived, one-use code.</p>
+        <div class="slide-title">
+          <h2>Authorize step 8: issue the result</h2>
+        </div>
+        <div class="slide-body">
+          <p>Create a short-lived, one-use code.</p>
 <p>Bind it to:</p>
 <ul>
 <li>Client ID</li>
@@ -155,33 +206,45 @@ code_challenge_method = S256
 <li>Scope and resource</li>
 <li>PKCE challenge</li>
 </ul>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="/token starts stricter" data-slide="14">
       <div class="slide-content">
-        <h2><code>/token</code> starts stricter</h2>
-<p>The token endpoint is a back-channel API.</p>
+        <div class="slide-title">
+          <h2><code>/token</code> starts stricter</h2>
+        </div>
+        <div class="slide-body">
+          <p>The token endpoint is a back-channel API.</p>
 <pre><code class="language-http">POST /token HTTP/1.1
 Content-Type: application/x-www-form-urlencoded
 Authorization: Basic ...
 </code></pre>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="Token step 1: parse form body" data-slide="15">
       <div class="slide-content">
-        <h2>Token step 1: parse form body</h2>
-<ul>
+        <div class="slide-title">
+          <h2>Token step 1: parse form body</h2>
+        </div>
+        <div class="slide-body">
+          <ul>
 <li>Require <code>grant_type</code></li>
 <li>Reject malformed form encoding</li>
 <li>Reject duplicated security parameters</li>
 <li>Ignore or reject unsupported extension parameters by policy</li>
 </ul>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="Token step 2: authenticate client" data-slide="16">
       <div class="slide-content">
-        <h2>Token step 2: authenticate client</h2>
-<p>Match the registered method.</p>
+        <div class="slide-title">
+          <h2>Token step 2: authenticate client</h2>
+        </div>
+        <div class="slide-body">
+          <p>Match the registered method.</p>
 <ul>
 <li><code>none</code></li>
 <li><code>client_secret_basic</code></li>
@@ -189,122 +252,170 @@ Authorization: Basic ...
 <li>JWT assertion</li>
 <li>mTLS or other extension methods</li>
 </ul>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="Token step 3: select grant validator" data-slide="17">
       <div class="slide-content">
-        <h2>Token step 3: select grant validator</h2>
-<pre><code class="language-text">grant_type=authorization_code -&gt; code validator
+        <div class="slide-title">
+          <h2>Token step 3: select grant validator</h2>
+        </div>
+        <div class="slide-body">
+          <pre><code class="language-text">grant_type=authorization_code -&gt; code validator
 grant_type=refresh_token      -&gt; refresh validator
 grant_type=client_credentials -&gt; client validator
 </code></pre>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="Code validator: load the code" data-slide="18">
       <div class="slide-content">
-        <h2>Code validator: load the code</h2>
-<p>Find the authorization code record.</p>
+        <div class="slide-title">
+          <h2>Code validator: load the code</h2>
+        </div>
+        <div class="slide-body">
+          <p>Find the authorization code record.</p>
 <ul>
 <li>Exists</li>
 <li>Not expired</li>
 <li>Not already used</li>
 <li>Issued by this authorization server</li>
 </ul>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="Code validator: bind the client" data-slide="19">
       <div class="slide-content">
-        <h2>Code validator: bind the client</h2>
-<p>The exchanger must be the original client.</p>
+        <div class="slide-title">
+          <h2>Code validator: bind the client</h2>
+        </div>
+        <div class="slide-body">
+          <p>The exchanger must be the original client.</p>
 <pre><code class="language-text">code.client_id == authenticated_client.id
 </code></pre>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="Code validator: bind redirect URI" data-slide="20">
       <div class="slide-content">
-        <h2>Code validator: bind redirect URI</h2>
-<p>Compare against the authorize request.</p>
+        <div class="slide-title">
+          <h2>Code validator: bind redirect URI</h2>
+        </div>
+        <div class="slide-body">
+          <p>Compare against the authorize request.</p>
 <pre><code class="language-text">token.redirect_uri == code.redirect_uri
 </code></pre>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="Code validator: verify PKCE" data-slide="21">
       <div class="slide-content">
-        <h2>Code validator: verify PKCE</h2>
-<pre><code class="language-text">BASE64URL(SHA256(code_verifier)) == code_challenge
+        <div class="slide-title">
+          <h2>Code validator: verify PKCE</h2>
+        </div>
+        <div class="slide-body">
+          <pre><code class="language-text">BASE64URL(SHA256(code_verifier)) == code_challenge
 </code></pre>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="Code validator: issue tokens" data-slide="22">
       <div class="slide-content">
-        <h2>Code validator: issue tokens</h2>
-<p>Only after all checks pass:</p>
+        <div class="slide-title">
+          <h2>Code validator: issue tokens</h2>
+        </div>
+        <div class="slide-body">
+          <p>Only after all checks pass:</p>
 <ul>
 <li>Mark code as consumed</li>
 <li>Issue access token</li>
 <li>Optionally issue refresh token</li>
 <li>Return <code>no-store</code> response headers</li>
 </ul>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="Cookie handling" data-slide="23">
       <div class="slide-content">
-        <h2>Cookie handling</h2>
-<p>OAuth browser steps rely on local session cookies.</p>
+        <div class="slide-title">
+          <h2>Cookie handling</h2>
+        </div>
+        <div class="slide-body">
+          <p>OAuth browser steps rely on local session cookies.</p>
 <ul>
 <li><code>HttpOnly</code></li>
 <li><code>Secure</code></li>
 <li><code>SameSite=Lax</code> or stronger by design</li>
 <li>Narrow path and domain</li>
 </ul>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="State and session binding" data-slide="24">
       <div class="slide-content">
-        <h2>State and session binding</h2>
-<p>Store pending request data server-side.</p>
+        <div class="slide-title">
+          <h2>State and session binding</h2>
+        </div>
+        <div class="slide-body">
+          <p>Store pending request data server-side.</p>
 <pre><code class="language-text">browser cookie -&gt; pending request id
 pending request -&gt; state, redirect target, code_verifier
 </code></pre>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="What state prevents" data-slide="25">
       <div class="slide-content">
-        <h2>What <code>state</code> prevents</h2>
-<p><code>state</code> connects the response to the request.</p>
+        <div class="slide-title">
+          <h2>What <code>state</code> prevents</h2>
+        </div>
+        <div class="slide-body">
+          <p><code>state</code> connects the response to the request.</p>
 <ul>
 <li>CSRF against the callback</li>
 <li>Login initiation confusion</li>
 <li>Response injection</li>
 <li>Accidental tab mix-ups</li>
 </ul>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="What PKCE prevents" data-slide="26">
       <div class="slide-content">
-        <h2>What PKCE prevents</h2>
-<p>PKCE protects the code in transit.</p>
+        <div class="slide-title">
+          <h2>What PKCE prevents</h2>
+        </div>
+        <div class="slide-body">
+          <p>PKCE protects the code in transit.</p>
 <pre><code class="language-text">attacker gets code
 attacker lacks verifier
 token request fails
 </code></pre>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="PKCE flow" data-slide="27">
       <div class="slide-content">
-        <h2>PKCE flow</h2>
-<pre><code class="language-text">1. Client creates code_verifier
+        <div class="slide-title">
+          <h2>PKCE flow</h2>
+        </div>
+        <div class="slide-body">
+          <pre><code class="language-text">1. Client creates code_verifier
 2. Client sends code_challenge at /authorize
 3. Server stores challenge with code
 4. Client sends verifier at /token
 5. Server compares verifier to challenge
 </code></pre>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="Security failure posture" data-slide="28">
       <div class="slide-content">
-        <h2>Security failure posture</h2>
-<p>Fail closed and route errors by endpoint.</p>
+        <div class="slide-title">
+          <h2>Security failure posture</h2>
+        </div>
+        <div class="slide-body">
+          <p>Fail closed and route errors by endpoint.</p>
 <ul>
 <li><code>invalid_request</code></li>
 <li><code>unauthorized_client</code></li>
@@ -314,14 +425,19 @@ token request fails
 <li><code>invalid_grant</code></li>
 <li><code>invalid_client</code></li>
 </ul>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="The mental model" data-slide="29">
       <div class="slide-content">
-        <h2>The mental model</h2>
-<p>Authorization endpoint validates the request and creates a bound grant.</p>
+        <div class="slide-title">
+          <h2>The mental model</h2>
+        </div>
+        <div class="slide-body">
+          <p>Authorization endpoint validates the request and creates a bound grant.</p>
 <p>Token endpoint validates the grant and issues credentials.</p>
 <p>Cookies, state, and PKCE bind the browser journey to the back-channel exchange.</p>
+        </div>
       </div>
     </section>
   </main>

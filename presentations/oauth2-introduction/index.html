@@ -10,8 +10,11 @@
   <main class="deck" data-deck="oauth2-introduction" data-title="Introduction to OAuth 2">
     <section class="slide" aria-label="Introduction to OAuth 2" data-slide="1">
       <div class="slide-content">
-        <h1>Introduction to OAuth 2</h1>
-<p>OAuth 2 is a framework for delegated authorization.</p>
+        <div class="slide-title">
+          <h1>Introduction to OAuth 2</h1>
+        </div>
+        <div class="slide-body">
+          <p>OAuth 2 is a framework for delegated authorization.</p>
 <ul>
 <li>What the authorize endpoint does</li>
 <li>What the token endpoint does</li>
@@ -19,20 +22,28 @@
 <li>How to read authorize and token requests</li>
 </ul>
 <p><a href="https://www.rfc-editor.org/info/rfc6749">RFC 6749</a> · <a href="https://www.rfc-editor.org/info/rfc9700">RFC 9700</a> · <a href="https://datatracker.ietf.org/doc/draft-ietf-oauth-v2-1/15/">OAuth 2.1 draft</a></p>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="Why OAuth exists" data-slide="2">
       <div class="slide-content">
-        <h2>Why OAuth exists</h2>
-<p>OAuth lets a client get limited access without handling the resource owner&#39;s password.</p>
+        <div class="slide-title">
+          <h2>Why OAuth exists</h2>
+        </div>
+        <div class="slide-body">
+          <p>OAuth lets a client get limited access without handling the resource owner&#39;s password.</p>
 <pre><code class="language-text">resource owner -&gt; authorization server -&gt; client -&gt; resource server
 </code></pre>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="Two endpoints carry the core flow" data-slide="3">
       <div class="slide-content">
-        <h2>Two endpoints carry the core flow</h2>
-<div class="cols">
+        <div class="slide-title">
+          <h2>Two endpoints carry the core flow</h2>
+        </div>
+        <div class="slide-body">
+          <div class="cols">
 
 <div class="callout">
 
@@ -47,12 +58,16 @@
 </div>
 
 </div>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="The authorize endpoint" data-slide="4">
       <div class="slide-content">
-        <h2>The authorize endpoint</h2>
-<p>The client sends the user to the authorization server.</p>
+        <div class="slide-title">
+          <h2>The authorize endpoint</h2>
+        </div>
+        <div class="slide-body">
+          <p>The client sends the user to the authorization server.</p>
 <pre><code class="language-http">GET /authorize?
   response_type=code&amp;
   client_id=calendar-web&amp;
@@ -60,39 +75,55 @@
   scope=calendar.read&amp;
   state=7b3c...
 </code></pre>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="Authorize request: routing" data-slide="5">
       <div class="slide-content">
-        <h2>Authorize request: routing</h2>
-<ul>
+        <div class="slide-title">
+          <h2>Authorize request: routing</h2>
+        </div>
+        <div class="slide-body">
+          <ul>
 <li><code>client_id</code> identifies the client registration.</li>
 <li><code>redirect_uri</code> tells the server where to send the result.</li>
 </ul>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="Authorize request: permissions and binding" data-slide="6">
       <div class="slide-content">
-        <h2>Authorize request: permissions and binding</h2>
-<ul>
+        <div class="slide-title">
+          <h2>Authorize request: permissions and binding</h2>
+        </div>
+        <div class="slide-body">
+          <ul>
 <li><code>scope</code> describes the access the client is requesting.</li>
 <li><code>state</code> is an opaque client value returned unchanged in the response.</li>
 </ul>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="Authorize request: response shape" data-slide="7">
       <div class="slide-content">
-        <h2>Authorize request: response shape</h2>
-<ul>
+        <div class="slide-title">
+          <h2>Authorize request: response shape</h2>
+        </div>
+        <div class="slide-body">
+          <ul>
 <li><code>response_type</code> selects what comes back from <code>/authorize</code>.</li>
 <li><code>response_mode</code> selects how parameters are encoded in the response.</li>
 </ul>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="The token endpoint" data-slide="8">
       <div class="slide-content">
-        <h2>The token endpoint</h2>
-<p>The client calls the authorization server directly.</p>
+        <div class="slide-title">
+          <h2>The token endpoint</h2>
+        </div>
+        <div class="slide-body">
+          <p>The client calls the authorization server directly.</p>
 <pre><code class="language-http">POST /token HTTP/1.1
 Content-Type: application/x-www-form-urlencoded
 Authorization: Basic ...
@@ -101,48 +132,65 @@ grant_type=authorization_code&amp;
 code=SplxlOBeZQQYbYS6WxSbIA&amp;
 redirect_uri=https%3A%2F%2Fclient.example%2Fcallback
 </code></pre>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="Grant types are token inputs" data-slide="9">
       <div class="slide-content">
-        <h2>Grant types are token inputs</h2>
-<p>A grant is the thing the client presents to get a token.</p>
+        <div class="slide-title">
+          <h2>Grant types are token inputs</h2>
+        </div>
+        <div class="slide-body">
+          <p>A grant is the thing the client presents to get a token.</p>
 <ul>
 <li>Authorization code</li>
 <li>Client credentials</li>
 <li>Refresh token</li>
 <li>Extension grants</li>
 </ul>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="Exchanges are trades" data-slide="10">
       <div class="slide-content">
-        <h2>Exchanges are trades</h2>
-<p>OAuth is a sequence of controlled exchanges.</p>
+        <div class="slide-title">
+          <h2>Exchanges are trades</h2>
+        </div>
+        <div class="slide-body">
+          <p>OAuth is a sequence of controlled exchanges.</p>
 <pre><code class="language-text">authorization request -&gt; authorization code
 authorization code -&gt; access token
 refresh token -&gt; new access token
 client credentials -&gt; access token
 </code></pre>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="Token request anatomy" data-slide="11">
       <div class="slide-content">
-        <h2>Token request anatomy</h2>
-<ul>
+        <div class="slide-title">
+          <h2>Token request anatomy</h2>
+        </div>
+        <div class="slide-body">
+          <ul>
 <li><code>grant_type</code> tells the server which validation rules apply.</li>
 <li><code>code</code> is the authorization code when using the code grant.</li>
 <li><code>redirect_uri</code> repeats the binding used in the authorization request.</li>
 <li>Client authentication proves the caller is the registered client when credentials can be kept.</li>
 </ul>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="The mental model" data-slide="12">
       <div class="slide-content">
-        <h2>The mental model</h2>
-<p><code>/authorize</code> creates a grant through the browser.</p>
+        <div class="slide-title">
+          <h2>The mental model</h2>
+        </div>
+        <div class="slide-body">
+          <p><code>/authorize</code> creates a grant through the browser.</p>
 <p><code>/token</code> validates a grant and issues tokens through a back channel.</p>
 <p>Grants describe why a token may be issued.</p>
+        </div>
       </div>
     </section>
   </main>

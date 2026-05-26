@@ -103,11 +103,30 @@ function parseSlide(source) {
   const notesMarkdown = notesMatch ? notesMatch[1].trim() : "";
   const contentMarkdown = notesMatch ? source.replace(notesMatch[0], "").trim() : source;
   const headingMatch = contentMarkdown.match(/^#{1,3}\s+(.+)$/m);
+  const html = marked.parse(contentMarkdown);
+  const content = splitSlideContent(html);
 
   return {
     title: headingMatch ? headingMatch[1].replace(/[`*_]/g, "").trim() : "Untitled slide",
-    html: marked.parse(contentMarkdown),
+    headingHtml: content.headingHtml,
+    bodyHtml: content.bodyHtml,
     notesHtml: notesMarkdown ? marked.parse(notesMarkdown) : "",
+  };
+}
+
+function splitSlideContent(html) {
+  const normalized = html.trim();
+  const headingMatch = normalized.match(/^(<h([1-3])[^>]*>[\s\S]*?<\/h\2>)\n?([\s\S]*)$/);
+  if (!headingMatch) {
+    return {
+      headingHtml: "",
+      bodyHtml: normalized,
+    };
+  }
+
+  return {
+    headingHtml: headingMatch[1],
+    bodyHtml: headingMatch[3].trim(),
   };
 }
 
@@ -170,7 +189,12 @@ function renderPresentation(deck) {
     .map(
       (slide, index) => `<section class="slide" aria-label="${escapeHtml(slide.title)}" data-slide="${index + 1}">
       <div class="slide-content">
-        ${slide.html.trim()}
+        <div class="slide-title">
+          ${slide.headingHtml}
+        </div>
+        <div class="slide-body">
+          ${slide.bodyHtml}
+        </div>
       </div>
     </section>`,
     )
@@ -239,4 +263,3 @@ for (const deck of decks) {
 if (checkOnly && process.exitCode) {
   console.error("Run `sfw npm run build` to regenerate static HTML.");
 }
-

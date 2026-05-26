@@ -10,8 +10,11 @@
   <main class="deck" data-deck="openid-connect-deep-dive" data-title="OpenID Connect Deep Dive">
     <section class="slide" aria-label="OpenID Connect Deep Dive" data-slide="1">
       <div class="slide-content">
-        <h1>OpenID Connect Deep Dive</h1>
-<p>OIDC adds identity to OAuth 2.</p>
+        <div class="slide-title">
+          <h1>OpenID Connect Deep Dive</h1>
+        </div>
+        <div class="slide-body">
+          <p>OIDC adds identity to OAuth 2.</p>
 <ul>
 <li>How OIDC builds on OAuth</li>
 <li>New authorization parameters and response types</li>
@@ -20,12 +23,16 @@
 <li>Authentication restrictions and assurances</li>
 </ul>
 <p><a href="https://openid.net/specs/openid-connect-core-1_0-errata2.html">OpenID Connect Core</a> · <a href="https://openid.net/specs/openid-connect-discovery-1_0-errata2.html">Discovery</a> · <a href="https://openid.net/specs/oauth-v2-multiple-response-types-1_0.html">Multiple Response Types</a> · <a href="https://www.rfc-editor.org/info/rfc6749">RFC 6749</a></p>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="OAuth versus OIDC" data-slide="2">
       <div class="slide-content">
-        <h2>OAuth versus OIDC</h2>
-<div class="cols">
+        <div class="slide-title">
+          <h2>OAuth versus OIDC</h2>
+        </div>
+        <div class="slide-body">
+          <div class="cols">
 
 <div>
 
@@ -40,32 +47,44 @@
 </div>
 
 </div>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="OIDC changes the audience" data-slide="3">
       <div class="slide-content">
-        <h2>OIDC changes the audience</h2>
-<p>The client is now a relying party.</p>
+        <div class="slide-title">
+          <h2>OIDC changes the audience</h2>
+        </div>
+        <div class="slide-body">
+          <p>The client is now a relying party.</p>
 <pre><code class="language-text">End user -&gt; OpenID Provider -&gt; Relying Party
 </code></pre>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="The openid scope" data-slide="4">
       <div class="slide-content">
-        <h2>The <code>openid</code> scope</h2>
-<p>OIDC starts when <code>scope</code> includes <code>openid</code>.</p>
+        <div class="slide-title">
+          <h2>The <code>openid</code> scope</h2>
+        </div>
+        <div class="slide-body">
+          <p>OIDC starts when <code>scope</code> includes <code>openid</code>.</p>
 <pre><code class="language-http">GET /authorize?
   response_type=code&amp;
   scope=openid%20profile%20email&amp;
   client_id=rp-web&amp;
   redirect_uri=https%3A%2F%2Frp.example%2Fcb
 </code></pre>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="New authorize parameters" data-slide="5">
       <div class="slide-content">
-        <h2>New authorize parameters</h2>
-<p>OIDC adds authentication controls.</p>
+        <div class="slide-title">
+          <h2>New authorize parameters</h2>
+        </div>
+        <div class="slide-body">
+          <p>OIDC adds authentication controls.</p>
 <ul>
 <li><code>nonce</code></li>
 <li><code>prompt</code></li>
@@ -74,106 +93,150 @@
 <li><code>acr_values</code></li>
 <li><code>claims</code></li>
 </ul>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="responsetype=code" data-slide="6">
       <div class="slide-content">
-        <h2><code>response_type=code</code></h2>
-<p>Authorization code flow returns the ID Token from <code>/token</code>.</p>
+        <div class="slide-title">
+          <h2><code>response_type=code</code></h2>
+        </div>
+        <div class="slide-body">
+          <p>Authorization code flow returns the ID Token from <code>/token</code>.</p>
 <pre><code class="language-text">/authorize -&gt; code
 /token     -&gt; id_token, access_token
 </code></pre>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="OIDC implicit response types" data-slide="7">
       <div class="slide-content">
-        <h2>OIDC implicit response types</h2>
-<p>OIDC can return ID Tokens from <code>/authorize</code>.</p>
+        <div class="slide-title">
+          <h2>OIDC implicit response types</h2>
+        </div>
+        <div class="slide-body">
+          <p>OIDC can return ID Tokens from <code>/authorize</code>.</p>
 <pre><code class="language-text">id_token
 id_token token
 </code></pre>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="OIDC hybrid response types" data-slide="8">
       <div class="slide-content">
-        <h2>OIDC hybrid response types</h2>
-<p>Hybrid returns some values up front and some later.</p>
+        <div class="slide-title">
+          <h2>OIDC hybrid response types</h2>
+        </div>
+        <div class="slide-body">
+          <p>Hybrid returns some values up front and some later.</p>
 <pre><code class="language-text">code id_token
 code token
 code id_token token
 </code></pre>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="ID Token purpose" data-slide="9">
       <div class="slide-content">
-        <h2>ID Token purpose</h2>
-<p>The ID Token is the authentication assertion.</p>
+        <div class="slide-title">
+          <h2>ID Token purpose</h2>
+        </div>
+        <div class="slide-body">
+          <p>The ID Token is the authentication assertion.</p>
 <pre><code class="language-text">issuer says: subject authenticated for this audience
 </code></pre>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="ID Token shape" data-slide="10">
       <div class="slide-content">
-        <h2>ID Token shape</h2>
-<p>An ID Token is usually a signed JWT.</p>
+        <div class="slide-title">
+          <h2>ID Token shape</h2>
+        </div>
+        <div class="slide-body">
+          <p>An ID Token is usually a signed JWT.</p>
 <pre><code class="language-text">header.payload.signature
 </code></pre>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="Core identity claims" data-slide="11">
       <div class="slide-content">
-        <h2>Core identity claims</h2>
-<ul>
+        <div class="slide-title">
+          <h2>Core identity claims</h2>
+        </div>
+        <div class="slide-body">
+          <ul>
 <li><code>iss</code>: issuer</li>
 <li><code>sub</code>: subject</li>
 <li><code>aud</code>: relying party client ID</li>
 <li><code>exp</code>: expiration</li>
 <li><code>iat</code>: issued at</li>
 </ul>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="Audience and authorized party" data-slide="12">
       <div class="slide-content">
-        <h2>Audience and authorized party</h2>
-<p><code>aud</code> tells who the token is for.</p>
+        <div class="slide-title">
+          <h2>Audience and authorized party</h2>
+        </div>
+        <div class="slide-body">
+          <p><code>aud</code> tells who the token is for.</p>
 <p><code>azp</code> may identify the authorized party.</p>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="Time and freshness claims" data-slide="13">
       <div class="slide-content">
-        <h2>Time and freshness claims</h2>
-<ul>
+        <div class="slide-title">
+          <h2>Time and freshness claims</h2>
+        </div>
+        <div class="slide-body">
+          <ul>
 <li><code>exp</code> rejects expired tokens</li>
 <li><code>iat</code> supports age checks</li>
 <li><code>auth_time</code> says when login happened</li>
 </ul>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="Flow binding claims" data-slide="14">
       <div class="slide-content">
-        <h2>Flow binding claims</h2>
-<ul>
+        <div class="slide-title">
+          <h2>Flow binding claims</h2>
+        </div>
+        <div class="slide-body">
+          <ul>
 <li><code>nonce</code>: binds ID Token to browser request</li>
 <li><code>c_hash</code>: binds authorization code</li>
 <li><code>at_hash</code>: binds access token</li>
 </ul>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="Claims relate to request parameters" data-slide="15">
       <div class="slide-content">
-        <h2>Claims relate to request parameters</h2>
-<pre><code class="language-text">nonce      -&gt; nonce claim
+        <div class="slide-title">
+          <h2>Claims relate to request parameters</h2>
+        </div>
+        <div class="slide-body">
+          <pre><code class="language-text">nonce      -&gt; nonce claim
 max_age    -&gt; auth_time claim
 acr_values -&gt; acr claim
 scope      -&gt; profile claims
 claims     -&gt; requested claim set
 </code></pre>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="state versus nonce" data-slide="16">
       <div class="slide-content">
-        <h2><code>state</code> versus <code>nonce</code></h2>
-<div class="cols">
+        <div class="slide-title">
+          <h2><code>state</code> versus <code>nonce</code></h2>
+        </div>
+        <div class="slide-body">
+          <div class="cols">
 
 <div>
 
@@ -188,85 +251,118 @@ claims     -&gt; requested claim set
 </div>
 
 </div>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="What nonce solves" data-slide="17">
       <div class="slide-content">
-        <h2>What nonce solves</h2>
-<p>Nonce prevents replayed ID Tokens.</p>
+        <div class="slide-title">
+          <h2>What nonce solves</h2>
+        </div>
+        <div class="slide-body">
+          <p>Nonce prevents replayed ID Tokens.</p>
 <pre><code class="language-text">old id_token + wrong browser session -&gt; rejected
 </code></pre>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="prompt" data-slide="18">
       <div class="slide-content">
-        <h2><code>prompt</code></h2>
-<p>The RP can ask for interaction behavior.</p>
+        <div class="slide-title">
+          <h2><code>prompt</code></h2>
+        </div>
+        <div class="slide-body">
+          <p>The RP can ask for interaction behavior.</p>
 <pre><code class="language-text">prompt=login
 prompt=consent
 prompt=none
 prompt=select_account
 </code></pre>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="maxage" data-slide="19">
       <div class="slide-content">
-        <h2><code>max_age</code></h2>
-<p>The RP sets maximum authentication age.</p>
+        <div class="slide-title">
+          <h2><code>max_age</code></h2>
+        </div>
+        <div class="slide-body">
+          <p>The RP sets maximum authentication age.</p>
 <pre><code class="language-text">max_age=300
 </code></pre>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="Authentication context" data-slide="20">
       <div class="slide-content">
-        <h2>Authentication context</h2>
-<p><code>acr</code> describes the authentication context class.</p>
+        <div class="slide-title">
+          <h2>Authentication context</h2>
+        </div>
+        <div class="slide-body">
+          <p><code>acr</code> describes the authentication context class.</p>
 <pre><code class="language-json">{
   &quot;acr&quot;: &quot;urn:example:loa:2&quot;
 }
 </code></pre>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="Authentication methods" data-slide="21">
       <div class="slide-content">
-        <h2>Authentication methods</h2>
-<p><code>amr</code> lists methods used.</p>
+        <div class="slide-title">
+          <h2>Authentication methods</h2>
+        </div>
+        <div class="slide-body">
+          <p><code>amr</code> lists methods used.</p>
 <pre><code class="language-json">{
   &quot;amr&quot;: [&quot;pwd&quot;, &quot;otp&quot;]
 }
 </code></pre>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="Claims parameter" data-slide="22">
       <div class="slide-content">
-        <h2>Claims parameter</h2>
-<p>The RP can ask for specific claims.</p>
+        <div class="slide-title">
+          <h2>Claims parameter</h2>
+        </div>
+        <div class="slide-body">
+          <p>The RP can ask for specific claims.</p>
 <pre><code class="language-json">{
   &quot;id_token&quot;: {
     &quot;email_verified&quot;: { &quot;essential&quot;: true }
   }
 }
 </code></pre>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="Validation checklist" data-slide="23">
       <div class="slide-content">
-        <h2>Validation checklist</h2>
-<ul>
+        <div class="slide-title">
+          <h2>Validation checklist</h2>
+        </div>
+        <div class="slide-body">
+          <ul>
 <li>Discover issuer metadata</li>
 <li>Validate signature and algorithm</li>
 <li>Check <code>iss</code>, <code>aud</code>, <code>exp</code>, <code>iat</code></li>
 <li>Check <code>nonce</code></li>
 <li>Check <code>auth_time</code>, <code>acr</code>, <code>amr</code> when required</li>
 </ul>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="The mental model" data-slide="24">
       <div class="slide-content">
-        <h2>The mental model</h2>
-<p>OAuth says what access was delegated.</p>
+        <div class="slide-title">
+          <h2>The mental model</h2>
+        </div>
+        <div class="slide-body">
+          <p>OAuth says what access was delegated.</p>
 <p>OIDC says who authenticated and how the RP can verify it.</p>
 <p><code>state</code> protects the redirect; <code>nonce</code> protects the ID Token.</p>
+        </div>
       </div>
     </section>
   </main>
