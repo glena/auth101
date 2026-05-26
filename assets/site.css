@@ -1,0 +1,105 @@
+:root {
+  color-scheme: light;
+  --bg: #f7f5f0;
+  --surface: #ffffff;
+  --text: #202124;
+  --muted: #5f665f;
+  --line: #d8d2c4;
+  --accent: #3f7d6b;
+  --accent-2: #9a5f42;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: 1.5;
+}
+
+main {
+  width: min(1120px, calc(100% - 48px));
+  margin: 0 auto;
+  padding: 56px 0;
+}
+
+.hero {
+  margin-bottom: 44px;
+}
+
+.hero p {
+  max-width: 760px;
+  color: var(--muted);
+  font-size: 1.08rem;
+}
+
+h1 {
+  margin: 0 0 16px;
+  font-size: clamp(2.4rem, 5vw, 4.6rem);
+  line-height: 1;
+}
+
+h2 {
+  margin: 0 0 10px;
+  font-size: 1.35rem;
+}
+
+.deck-list {
+  display: grid;
+  gap: 16px;
+}
+
+.deck-card {
+  display: grid;
+  gap: 14px;
+  padding: 22px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.deck-card p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.deck-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.deck-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+a {
+  color: var(--accent);
+  font-weight: 650;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 6px;
+  border: 1px solid var(--accent);
+  color: #12392f;
+  text-decoration: none;
+}
+
+.button.secondary {
+  border-color: var(--line);
+  color: var(--accent-2);
+}
+
