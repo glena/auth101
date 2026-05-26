@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OAuth 2 Internals and Security</title>
+  <link rel="stylesheet" href="../../assets/presentation.css">
+</head>
+<body>
+  <main class="deck" data-deck="oauth2-internals-security" data-title="OAuth 2 Internals and Security">
+    <section class="slide" aria-label="OAuth 2 Internals and Security" data-slide="1">
+      <div class="slide-content">
+        <h1>OAuth 2 Internals and Security</h1>
+<p>This deck opens the authorization server black box.</p>
+<ul>
+<li><code>/authorize</code> parsing and validation</li>
+<li><code>/token</code> parsing and validation</li>
+<li>Code flow security checkpoints</li>
+<li>Cookie, state, session, and PKCE binding</li>
+</ul>
+<p><a href="https://www.rfc-editor.org/info/rfc6749">RFC 6749</a> · <a href="https://www.rfc-editor.org/info/rfc7636">RFC 7636</a> · <a href="https://www.rfc-editor.org/info/rfc9700">RFC 9700</a> · <a href="https://datatracker.ietf.org/doc/draft-ietf-oauth-v2-1/15/">OAuth 2.1 draft-15</a></p>
+      </div>
+    </section>
+<section class="slide" aria-label="/authorize starts with parsing" data-slide="2">
+      <div class="slide-content">
+        <h2><code>/authorize</code> starts with parsing</h2>
+<p>Read the request as protocol input, not as trusted app data.</p>
+<pre><code class="language-http">GET /authorize?
+  response_type=code&amp;
+  client_id=calendar-web&amp;
+  redirect_uri=https%3A%2F%2Fclient.example%2Fcb&amp;
+  scope=calendar.read&amp;
+  state=7b3c...
+</code></pre>
+      </div>
+    </section>
+<section class="slide" aria-label="Authorize step 1: client lookup" data-slide="3">
+      <div class="slide-content">
+        <h2>Authorize step 1: client lookup</h2>
+<ul>
+<li>Require <code>client_id</code></li>
+<li>Load registered metadata</li>
+<li>Check client is active</li>
+<li>Check grant and response type are allowed</li>
+</ul>
+      </div>
+    </section>
+<section class="slide" aria-label="Authorize step 2: redirect URI" data-slide="4">
+      <div class="slide-content">
+        <h2>Authorize step 2: redirect URI</h2>
+<p>Validate before redirecting.</p>
+<ul>
+<li>Exact match registered URI</li>
+<li>No open redirect patterns</li>
+<li>No wildcard surprises</li>
+<li>Preserve original value for code binding</li>
+</ul>
+      </div>
+    </section>
+<section class="slide" aria-label="Authorize step 3: response type" data-slide="5">
+      <div class="slide-content">
+        <h2>Authorize step 3: response type</h2>
+<p><code>response_type</code> selects the processing branch.</p>
+<pre><code class="language-text">code   -&gt; issue authorization code
+token  -&gt; legacy implicit token response
+</code></pre>
+      </div>
+    </section>
+<section class="slide" aria-label="Authorize step 4: scope and resource" data-slide="6">
+      <div class="slide-content">
+        <h2>Authorize step 4: scope and resource</h2>
+<p>Validate requested authority.</p>
+<ul>
+<li>Parse requested scopes</li>
+<li>Apply client policy</li>
+<li>Apply user policy</li>
+<li>Narrow grants when needed</li>
+</ul>
+      </div>
+    </section>
+<section class="slide" aria-label="Authorize step 5: state" data-slide="7">
+      <div class="slide-content">
+        <h2>Authorize step 5: state</h2>
+<p>Return <code>state</code> exactly when it was supplied.</p>
+<pre><code class="language-http">Location: https://client.example/cb?
+  code=abc&amp;
+  state=7b3c...
+</code></pre>
+      </div>
+    </section>
+<section class="slide" aria-label="Authorize step 6: PKCE inputs" data-slide="8">
+      <div class="slide-content">
+        <h2>Authorize step 6: PKCE inputs</h2>
+<p>For code flow, store the challenge with the code.</p>
+<pre><code class="language-text">code_challenge = BASE64URL(SHA256(code_verifier))
+code_challenge_method = S256
+</code></pre>
+      </div>
+    </section>
+<section class="slide" aria-label="Authorize step 7: user session" data-slide="9">
+      <div class="slide-content">
+        <h2>Authorize step 7: user session</h2>
+<p>Authenticate the user when policy requires it.</p>
+<ul>
+<li>Existing session is acceptable only if fresh enough</li>
+<li>Login method is outside core OAuth</li>
+<li>Consent may be required</li>
+<li>Denial is a valid outcome</li>
+</ul>
+      </div>
+    </section>
+<section class="slide" aria-label="Authorize step 8: issue the result" data-slide="10">
+      <div class="slide-content">
+        <h2>Authorize step 8: issue the result</h2>
+<p>Create a short-lived, one-use code.</p>
+<p>Bind it to:</p>
+<ul>
+<li>Client ID</li>
+<li>Redirect URI</li>
+<li>User and authorization decision</li>
+<li>Scope and resource</li>
+<li>PKCE challenge</li>
+</ul>
+      </div>
+    </section>
+<section class="slide" aria-label="/token starts stricter" data-slide="11">
+      <div class="slide-content">
+        <h2><code>/token</code> starts stricter</h2>
+<p>The token endpoint is a back-channel API.</p>
+<pre><code class="language-http">POST /token HTTP/1.1
+Content-Type: application/x-www-form-urlencoded
+Authorization: Basic ...
+</code></pre>
+      </div>
+    </section>
+<section class="slide" aria-label="Token step 1: parse form body" data-slide="12">
+      <div class="slide-content">
+        <h2>Token step 1: parse form body</h2>
+<ul>
+<li>Require <code>grant_type</code></li>
+<li>Reject malformed form encoding</li>
+<li>Reject duplicated security parameters</li>
+<li>Ignore or reject unsupported extension parameters by policy</li>
+</ul>
+      </div>
+    </section>
+<section class="slide" aria-label="Token step 2: authenticate client" data-slide="13">
+      <div class="slide-content">
+        <h2>Token step 2: authenticate client</h2>
+<p>Match the registered method.</p>
+<ul>
+<li><code>none</code></li>
+<li><code>client_secret_basic</code></li>
+<li><code>client_secret_post</code></li>
+<li>JWT assertion</li>
+<li>mTLS or other extension methods</li>
+</ul>
+      </div>
+    </section>
+<section class="slide" aria-label="Token step 3: select grant validator" data-slide="14">
+      <div class="slide-content">
+        <h2>Token step 3: select grant validator</h2>
+<pre><code class="language-text">grant_type=authorization_code -&gt; code validator
+grant_type=refresh_token      -&gt; refresh validator
+grant_type=client_credentials -&gt; client validator
+</code></pre>
+      </div>
+    </section>
+<section class="slide" aria-label="Code validator: load the code" data-slide="15">
+      <div class="slide-content">
+        <h2>Code validator: load the code</h2>
+<p>Find the authorization code record.</p>
+<ul>
+<li>Exists</li>
+<li>Not expired</li>
+<li>Not already used</li>
+<li>Issued by this authorization server</li>
+</ul>
+      </div>
+    </section>
+<section class="slide" aria-label="Code validator: bind the client" data-slide="16">
+      <div class="slide-content">
+        <h2>Code validator: bind the client</h2>
+<p>The exchanger must be the original client.</p>
+<pre><code class="language-text">code.client_id == authenticated_client.id
+</code></pre>
+      </div>
+    </section>
+<section class="slide" aria-label="Code validator: bind redirect URI" data-slide="17">
+      <div class="slide-content">
+        <h2>Code validator: bind redirect URI</h2>
+<p>Compare against the authorize request.</p>
+<pre><code class="language-text">token.redirect_uri == code.redirect_uri
+</code></pre>
+      </div>
+    </section>
+<section class="slide" aria-label="Code validator: verify PKCE" data-slide="18">
+      <div class="slide-content">
+        <h2>Code validator: verify PKCE</h2>
+<pre><code class="language-text">BASE64URL(SHA256(code_verifier)) == code_challenge
+</code></pre>
+      </div>
+    </section>
+<section class="slide" aria-label="Code validator: issue tokens" data-slide="19">
+      <div class="slide-content">
+        <h2>Code validator: issue tokens</h2>
+<p>Only after all checks pass:</p>
+<ul>
+<li>Mark code as consumed</li>
+<li>Issue access token</li>
+<li>Optionally issue refresh token</li>
+<li>Return <code>no-store</code> response headers</li>
+</ul>
+      </div>
+    </section>
+<section class="slide" aria-label="Cookie handling" data-slide="20">
+      <div class="slide-content">
+        <h2>Cookie handling</h2>
+<p>OAuth browser steps rely on local session cookies.</p>
+<ul>
+<li><code>HttpOnly</code></li>
+<li><code>Secure</code></li>
+<li><code>SameSite=Lax</code> or stronger by design</li>
+<li>Narrow path and domain</li>
+</ul>
+      </div>
+    </section>
+<section class="slide" aria-label="State and session binding" data-slide="21">
+      <div class="slide-content">
+        <h2>State and session binding</h2>
+<p>Store pending request data server-side.</p>
+<pre><code class="language-text">browser cookie -&gt; pending request id
+pending request -&gt; state, redirect target, code_verifier
+</code></pre>
+      </div>
+    </section>
+<section class="slide" aria-label="What state prevents" data-slide="22">
+      <div class="slide-content">
+        <h2>What <code>state</code> prevents</h2>
+<p><code>state</code> connects the response to the request.</p>
+<ul>
+<li>CSRF against the callback</li>
+<li>Login initiation confusion</li>
+<li>Response injection</li>
+<li>Accidental tab mix-ups</li>
+</ul>
+      </div>
+    </section>
+<section class="slide" aria-label="What PKCE prevents" data-slide="23">
+      <div class="slide-content">
+        <h2>What PKCE prevents</h2>
+<p>PKCE protects the code in transit.</p>
+<pre><code class="language-text">attacker gets code
+attacker lacks verifier
+token request fails
+</code></pre>
+      </div>
+    </section>
+<section class="slide" aria-label="PKCE flow" data-slide="24">
+      <div class="slide-content">
+        <h2>PKCE flow</h2>
+<pre><code class="language-text">1. Client creates code_verifier
+2. Client sends code_challenge at /authorize
+3. Server stores challenge with code
+4. Client sends verifier at /token
+5. Server compares verifier to challenge
+</code></pre>
+      </div>
+    </section>
+<section class="slide" aria-label="Security failure posture" data-slide="25">
+      <div class="slide-content">
+        <h2>Security failure posture</h2>
+<p>Fail closed and return OAuth errors.</p>
+<ul>
+<li><code>invalid_request</code></li>
+<li><code>unauthorized_client</code></li>
+<li><code>access_denied</code></li>
+<li><code>unsupported_response_type</code></li>
+<li><code>invalid_scope</code></li>
+<li><code>invalid_grant</code></li>
+<li><code>invalid_client</code></li>
+</ul>
+      </div>
+    </section>
+<section class="slide" aria-label="The mental model" data-slide="26">
+      <div class="slide-content">
+        <h2>The mental model</h2>
+<p>Authorization endpoint validates the request and creates a bound grant.</p>
+<p>Token endpoint validates the grant and issues credentials.</p>
+<p>Cookies, state, and PKCE bind the browser journey to the back-channel exchange.</p>
+      </div>
+    </section>
+  </main>
+  <div class="controls" aria-label="Presentation controls">
+    <button type="button" data-prev aria-label="Previous slide">Prev</button>
+    <span data-counter></span>
+    <button type="button" data-next aria-label="Next slide">Next</button>
+    <button type="button" data-notes aria-label="Open presenter notes">Notes</button>
+  </div>
+  <div class="progress" aria-hidden="true"><span data-progress></span></div>
+  <script type="application/json" id="notes-data">["\u003cp>This deck is implementation-oriented but still specification-driven. OAuth 2.1 is a working-group draft, so cite it as draft-15 and use RFC 6749 plus RFC 9700 as the stable basis.\u003c/p>\n","\u003cp>The authorization endpoint usually accepts query parameters. Implementations should reject malformed encodings, duplicated parameters when ambiguity matters, unsupported methods if only GET is supported, and unexpected content types for POST variants.\u003c/p>\n","\u003cp>Do not continue with user interaction until the client is known and authorized to use the requested flow. Client status, allowed redirect URIs, allowed scopes, and allowed authentication methods all come from registration or server policy.\u003c/p>\n","\u003cp>Loose redirect matching is one of the highest-impact OAuth mistakes. If the redirect URI is invalid, the authorization server must not redirect the browser to it with an error because that can leak data to an attacker-controlled endpoint.\u003c/p>\n","\u003cp>Modern security guidance recommends authorization code with PKCE instead of implicit. Reject unsupported combinations and values that are not enabled for the client.\u003c/p>\n","\u003cp>OAuth allows the authorization server to grant less than requested. If resource indicators or rich authorization requests are supported, validate those as separate structured inputs instead of overloading \u003ccode>scope\u003c/code>.\u003c/p>\n","\u003cp>The authorization server treats \u003ccode>state\u003c/code> as opaque. The client uses it to bind the authorization response to the browser session and to detect unsolicited or swapped responses.\u003c/p>\n","\u003cp>PKCE is defined by RFC 7636. Modern guidance requires PKCE for public clients and strongly recommends it more broadly. Prefer \u003ccode>S256\u003c/code>; do not accept \u003ccode>plain\u003c/code> unless legacy compatibility explicitly requires it.\u003c/p>\n","\u003cp>OAuth does not define how the user logs in. The authorization server owns local authentication, step-up, account selection, and consent policy.\u003c/p>\n","\u003cp>The code should be high entropy, expire quickly, and be invalidated after successful use. Store only what the token endpoint needs to validate the exchange.\u003c/p>\n","\u003cp>Require TLS. Accept only intended methods and content types. Token endpoint request bodies contain secrets and grants; avoid logging raw bodies.\u003c/p>\n","\u003cp>Parameter handling must be deterministic. Ambiguous duplicate \u003ccode>code\u003c/code>, \u003ccode>redirect_uri\u003c/code>, \u003ccode>client_id\u003c/code>, or authentication fields can create request smuggling-style bugs at the application layer.\u003c/p>\n","\u003cp>The server should enforce exactly the registered authentication method. A confidential client that fails authentication gets \u003ccode>invalid_client\u003c/code>. Public clients still identify themselves with \u003ccode>client_id\u003c/code> when needed.\u003c/p>\n","\u003cp>Each grant has separate required parameters and validation rules. Do not validate everything through one permissive path.\u003c/p>\n","\u003cp>Treat missing, expired, reused, and mismatched codes as \u003ccode>invalid_grant\u003c/code>. Reuse may indicate interception; revoke related tokens when policy calls for it.\u003c/p>\n","\u003cp>For public clients, the authenticated identity may be the \u003ccode>client_id\u003c/code> in the body plus PKCE proof. For confidential clients, it is the authenticated client credentials or assertion.\u003c/p>\n","\u003cp>This prevents a code issued for one redirect URI from being redeemed under another. RFC 6749 requires \u003ccode>redirect_uri\u003c/code> at the token endpoint when it was present in the authorization request.\u003c/p>\n","\u003cp>Use constant-time comparison where practical. Reject missing verifier when the code has a stored challenge. Reject wrong method, malformed verifier, or verifier outside the allowed character and length rules.\u003c/p>\n","\u003cp>Mark the code as consumed transactionally with token issuance. Race conditions can otherwise allow one code to mint multiple token sets.\u003c/p>\n","\u003cp>The authorization server uses cookies for its own login session. The client may use cookies to remember pending OAuth requests. Cookie attributes are not OAuth parameters, but they are essential to keeping state binding and login sessions intact.\u003c/p>\n","\u003cp>Prefer storing sensitive request context server-side and putting only an opaque handle in the browser cookie. If data is stored client-side, protect integrity and confidentiality as appropriate.\u003c/p>\n","\u003cp>Generate high-entropy state per authorization request. Check it before exchanging the code. State does not prove the code belongs to the client; PKCE, redirect URI, and client binding handle that.\u003c/p>\n","\u003cp>PKCE was created for public clients, especially native apps, where authorization codes could be intercepted. RFC 9700 and OAuth 2.1 make it part of the modern baseline.\u003c/p>\n","\u003cp>The verifier is never sent through the authorization redirect. That is the security property: the value needed to redeem the code stays with the client until the back-channel token request.\u003c/p>\n","\u003cp>Use redirect-based errors only when the redirect URI has been validated. Use token endpoint JSON errors for token failures. Keep detailed diagnostics in server logs, not browser-visible error descriptions.\u003c/p>\n","\u003cp>This sets up the attack-vector deck: most OAuth incidents are failures of binding, redirect validation, token handling, or legacy flow choices.\u003c/p>\n"]</script>
+  <script src="../../assets/presentation.js"></script>
+</body>
+</html>
