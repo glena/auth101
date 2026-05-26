@@ -8,4 +8,5 @@ fi
 
 sfw npm run build
 sfw npm run lint
+sfw npm run format
 git add index.html presentations/*/index.html
