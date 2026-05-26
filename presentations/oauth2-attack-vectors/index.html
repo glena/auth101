@@ -10,8 +10,11 @@
   <main class="deck" data-deck="oauth2-attack-vectors" data-title="OAuth 2 Attack Vectors and OAuth 2.1">
     <section class="slide" aria-label="OAuth 2 Attack Vectors and OAuth 2.1" data-slide="1">
       <div class="slide-content">
-        <h1>OAuth 2 Attack Vectors and OAuth 2.1</h1>
-<p>This deck turns the protocol into a threat model.</p>
+        <div class="slide-title">
+          <h1>OAuth 2 Attack Vectors and OAuth 2.1</h1>
+        </div>
+        <div class="slide-body">
+          <p>This deck turns the protocol into a threat model.</p>
 <ul>
 <li>OWASP OAuth attack classes</li>
 <li>OAuth-specific implementation failures</li>
@@ -19,12 +22,16 @@
 <li>OAuth 2.1 recommendations and why they exist</li>
 </ul>
 <p><a href="https://cheatsheetseries.owasp.org/cheatsheets/OAuth2_Cheat_Sheet.html">OWASP OAuth2 Cheat Sheet</a> · <a href="https://www.rfc-editor.org/info/rfc9700">RFC 9700</a> · <a href="https://www.rfc-editor.org/info/rfc6819">RFC 6819</a> · <a href="https://datatracker.ietf.org/doc/draft-ietf-oauth-v2-1/15/">OAuth 2.1 draft-15</a></p>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="OWASP framing" data-slide="2">
       <div class="slide-content">
-        <h2>OWASP framing</h2>
-<p>OAuth incidents usually look like familiar web failures.</p>
+        <div class="slide-title">
+          <h2>OWASP framing</h2>
+        </div>
+        <div class="slide-body">
+          <p>OAuth incidents usually look like familiar web failures.</p>
 <ul>
 <li>Broken access control</li>
 <li>Identification and authentication failures</li>
@@ -32,12 +39,16 @@
 <li>Security misconfiguration</li>
 <li>Server-side request and redirect abuse</li>
 </ul>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="OAuth-specific failures" data-slide="3">
       <div class="slide-content">
-        <h2>OAuth-specific failures</h2>
-<p>The common pattern is broken binding.</p>
+        <div class="slide-title">
+          <h2>OAuth-specific failures</h2>
+        </div>
+        <div class="slide-body">
+          <p>The common pattern is broken binding.</p>
 <ul>
 <li>Code not bound to client</li>
 <li>Redirect not bound to registration</li>
@@ -45,98 +56,138 @@
 <li>Token not bound to intended resource</li>
 <li>Refresh token not bound to rotation state</li>
 </ul>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="Attack: redirect URI manipulation" data-slide="4">
       <div class="slide-content">
-        <h2>Attack: redirect URI manipulation</h2>
-<p>An attacker steers the authorization response.</p>
+        <div class="slide-title">
+          <h2>Attack: redirect URI manipulation</h2>
+        </div>
+        <div class="slide-body">
+          <p>An attacker steers the authorization response.</p>
 <pre><code class="language-text">registered: https://client.example/cb
 attacker:   https://client.example/cb/../open-redirect?to=...
 </code></pre>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="Attack: authorization code interception" data-slide="5">
       <div class="slide-content">
-        <h2>Attack: authorization code interception</h2>
-<p>The attacker obtains the code before the client redeems it.</p>
+        <div class="slide-title">
+          <h2>Attack: authorization code interception</h2>
+        </div>
+        <div class="slide-body">
+          <p>The attacker obtains the code before the client redeems it.</p>
 <pre><code class="language-text">front-channel code leak -&gt; token exchange attempt
 </code></pre>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="Attack: CSRF on callback" data-slide="6">
       <div class="slide-content">
-        <h2>Attack: CSRF on callback</h2>
-<p>The victim&#39;s browser receives an attacker&#39;s response.</p>
+        <div class="slide-title">
+          <h2>Attack: CSRF on callback</h2>
+        </div>
+        <div class="slide-body">
+          <p>The victim&#39;s browser receives an attacker&#39;s response.</p>
 <pre><code class="language-text">victim session + attacker code = wrong account bound
 </code></pre>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="Attack: mix-up" data-slide="7">
       <div class="slide-content">
-        <h2>Attack: mix-up</h2>
-<p>The client confuses one authorization server for another.</p>
+        <div class="slide-title">
+          <h2>Attack: mix-up</h2>
+        </div>
+        <div class="slide-body">
+          <p>The client confuses one authorization server for another.</p>
 <pre><code class="language-text">AS A response handled as AS B response
 </code></pre>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="Attack: token substitution" data-slide="8">
       <div class="slide-content">
-        <h2>Attack: token substitution</h2>
-<p>A token for one context is accepted in another.</p>
+        <div class="slide-title">
+          <h2>Attack: token substitution</h2>
+        </div>
+        <div class="slide-body">
+          <p>A token for one context is accepted in another.</p>
 <ul>
 <li>Wrong audience</li>
 <li>Wrong issuer</li>
 <li>Wrong resource</li>
 <li>Wrong client</li>
 </ul>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="Attack: implicit token leakage" data-slide="9">
       <div class="slide-content">
-        <h2>Attack: implicit token leakage</h2>
-<p>The access token is exposed through the browser.</p>
+        <div class="slide-title">
+          <h2>Attack: implicit token leakage</h2>
+        </div>
+        <div class="slide-body">
+          <p>The access token is exposed through the browser.</p>
 <ul>
 <li>URL fragments</li>
 <li>History and debugging tools</li>
 <li>JavaScript compromise</li>
 <li>Redirect mistakes</li>
 </ul>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="Attack: refresh token replay" data-slide="10">
       <div class="slide-content">
-        <h2>Attack: refresh token replay</h2>
-<p>Long-lived credentials become a second password.</p>
+        <div class="slide-title">
+          <h2>Attack: refresh token replay</h2>
+        </div>
+        <div class="slide-body">
+          <p>Long-lived credentials become a second password.</p>
 <pre><code class="language-text">stolen refresh token -&gt; repeated access token minting
 </code></pre>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="Attack: weak client authentication" data-slide="11">
       <div class="slide-content">
-        <h2>Attack: weak client authentication</h2>
-<p>The token endpoint accepts the wrong proof.</p>
+        <div class="slide-title">
+          <h2>Attack: weak client authentication</h2>
+        </div>
+        <div class="slide-body">
+          <p>The token endpoint accepts the wrong proof.</p>
 <ul>
 <li>Public client treated as confidential</li>
 <li>Secret leaked in browser code</li>
 <li>Multiple methods accepted accidentally</li>
 <li>JWT assertion audience not checked</li>
 </ul>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="Attack: scope overgranting" data-slide="12">
       <div class="slide-content">
-        <h2>Attack: scope overgranting</h2>
-<p>The issued token is broader than the user&#39;s decision.</p>
+        <div class="slide-title">
+          <h2>Attack: scope overgranting</h2>
+        </div>
+        <div class="slide-body">
+          <p>The issued token is broader than the user&#39;s decision.</p>
 <pre><code class="language-text">requested: read
 granted:   read write admin
 </code></pre>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="Efficient incident prevention" data-slide="13">
       <div class="slide-content">
-        <h2>Efficient incident prevention</h2>
-<p>Prioritize controls that protect many flows.</p>
+        <div class="slide-title">
+          <h2>Efficient incident prevention</h2>
+        </div>
+        <div class="slide-body">
+          <p>Prioritize controls that protect many flows.</p>
 <ul>
 <li>Exact redirect validation</li>
 <li>Authorization code with PKCE</li>
@@ -144,12 +195,16 @@ granted:   read write admin
 <li>Strict token validation</li>
 <li>Refresh token rotation</li>
 </ul>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="OAuth 2.1 in one slide" data-slide="14">
       <div class="slide-content">
-        <h2>OAuth 2.1 in one slide</h2>
-<p>OAuth 2.1 consolidates modern OAuth practice.</p>
+        <div class="slide-title">
+          <h2>OAuth 2.1 in one slide</h2>
+        </div>
+        <div class="slide-body">
+          <p>OAuth 2.1 consolidates modern OAuth practice.</p>
 <ul>
 <li>Code flow with PKCE as baseline</li>
 <li>Implicit removed</li>
@@ -157,73 +212,101 @@ granted:   read write admin
 <li>Bearer token guidance integrated</li>
 <li>Redirect URI rules tightened</li>
 </ul>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="2.1: code with PKCE" data-slide="15">
       <div class="slide-content">
-        <h2>2.1: code with PKCE</h2>
-<p>Every authorization code flow should use PKCE.</p>
+        <div class="slide-title">
+          <h2>2.1: code with PKCE</h2>
+        </div>
+        <div class="slide-body">
+          <p>Every authorization code flow should use PKCE.</p>
 <pre><code class="language-text">code_challenge at /authorize
 code_verifier at /token
 </code></pre>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="2.1: no implicit grant" data-slide="16">
       <div class="slide-content">
-        <h2>2.1: no implicit grant</h2>
-<p>Do not issue access tokens from <code>/authorize</code>.</p>
+        <div class="slide-title">
+          <h2>2.1: no implicit grant</h2>
+        </div>
+        <div class="slide-body">
+          <p>Do not issue access tokens from <code>/authorize</code>.</p>
 <pre><code class="language-text">response_type=token -&gt; legacy only
 </code></pre>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="2.1: no password grant" data-slide="17">
       <div class="slide-content">
-        <h2>2.1: no password grant</h2>
-<p>The client should not collect the user&#39;s password.</p>
+        <div class="slide-title">
+          <h2>2.1: no password grant</h2>
+        </div>
+        <div class="slide-body">
+          <p>The client should not collect the user&#39;s password.</p>
 <pre><code class="language-text">grant_type=password -&gt; removed from OAuth 2.1
 </code></pre>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="2.1: redirect URI discipline" data-slide="18">
       <div class="slide-content">
-        <h2>2.1: redirect URI discipline</h2>
-<p>Redirect URI validation becomes non-negotiable.</p>
+        <div class="slide-title">
+          <h2>2.1: redirect URI discipline</h2>
+        </div>
+        <div class="slide-body">
+          <p>Redirect URI validation becomes non-negotiable.</p>
 <ul>
 <li>Register exact URIs</li>
 <li>Compare exact values</li>
 <li>Avoid wildcards</li>
 <li>Protect redirect endpoints</li>
 </ul>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="2.1: bearer token handling" data-slide="19">
       <div class="slide-content">
-        <h2>2.1: bearer token handling</h2>
-<p>Bearer tokens are credentials.</p>
+        <div class="slide-title">
+          <h2>2.1: bearer token handling</h2>
+        </div>
+        <div class="slide-body">
+          <p>Bearer tokens are credentials.</p>
 <ul>
 <li>Transmit over TLS</li>
 <li>Do not log tokens</li>
 <li>Validate audience and issuer</li>
 <li>Keep lifetimes narrow</li>
 </ul>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="2.1: refresh tokens" data-slide="20">
       <div class="slide-content">
-        <h2>2.1: refresh tokens</h2>
-<p>Refresh tokens require active management.</p>
+        <div class="slide-title">
+          <h2>2.1: refresh tokens</h2>
+        </div>
+        <div class="slide-body">
+          <p>Refresh tokens require active management.</p>
 <ul>
 <li>Rotate public-client refresh tokens</li>
 <li>Detect reuse</li>
 <li>Bind to client and authorization</li>
 <li>Revoke on compromise</li>
 </ul>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="2.1: public clients" data-slide="21">
       <div class="slide-content">
-        <h2>2.1: public clients</h2>
-<p>Public clients are not broken clients.</p>
+        <div class="slide-title">
+          <h2>2.1: public clients</h2>
+        </div>
+        <div class="slide-body">
+          <p>Public clients are not broken clients.</p>
 <p>They need different controls:</p>
 <ul>
 <li>PKCE</li>
@@ -231,24 +314,32 @@ code_verifier at /token
 <li>No embedded secrets</li>
 <li>Platform-appropriate redirect patterns</li>
 </ul>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="2.1: extension hygiene" data-slide="22">
       <div class="slide-content">
-        <h2>2.1: extension hygiene</h2>
-<p>Extensions must preserve binding.</p>
+        <div class="slide-title">
+          <h2>2.1: extension hygiene</h2>
+        </div>
+        <div class="slide-body">
+          <p>Extensions must preserve binding.</p>
 <ul>
 <li>PAR for request integrity</li>
 <li>JAR for signed requests</li>
 <li>DPoP or mTLS for sender-constrained tokens</li>
 <li>Issuer identification for mix-up defenses</li>
 </ul>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="Prevention checklist" data-slide="23">
       <div class="slide-content">
-        <h2>Prevention checklist</h2>
-<p>Build these into platform defaults.</p>
+        <div class="slide-title">
+          <h2>Prevention checklist</h2>
+        </div>
+        <div class="slide-body">
+          <p>Build these into platform defaults.</p>
 <ul>
 <li>Secure client registration profiles</li>
 <li>Centralized redirect URI validation</li>
@@ -256,13 +347,18 @@ code_verifier at /token
 <li>Token validation middleware</li>
 <li>Security event logging</li>
 </ul>
+        </div>
       </div>
     </section>
 <section class="slide" aria-label="The mental model" data-slide="24">
       <div class="slide-content">
-        <h2>The mental model</h2>
-<p>Most OAuth attacks exploit a missing proof.</p>
+        <div class="slide-title">
+          <h2>The mental model</h2>
+        </div>
+        <div class="slide-body">
+          <p>Most OAuth attacks exploit a missing proof.</p>
 <p>OAuth 2.1 and RFC 9700 add the missing proofs to the default path.</p>
+        </div>
       </div>
     </section>
   </main>
