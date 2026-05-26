@@ -1,0 +1,86 @@
+name: Publish GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: github-pages-publish
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    name: Build and sync gh-pages
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install Socket Firewall
+        uses: socketdev/action@v1
+        with:
+          mode: firewall
+
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: sfw npm exec --yes --package npm@11.11.1 -- npm ci
+
+      - name: Check generated HTML
+        run: sfw npm run check
+
+      - name: Build static site
+        run: sfw npm run build
+
+      - name: Stage GitHub Pages content
+        run: |
+          set -euo pipefail
+          rm -rf public
+          mkdir -p public
+
+          cp index.html public/
+          rsync -a assets/ public/assets/
+          rsync -a --exclude='slides.md' presentations/ public/presentations/
+          touch public/.nojekyll
+
+      - name: Sync gh-pages branch
+        env:
+          PUBLISH_BRANCH: gh-pages
+        run: |
+          set -euo pipefail
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git fetch origin "${PUBLISH_BRANCH}" || true
+          rm -rf .gh-pages
+
+          if git show-ref --verify --quiet "refs/remotes/origin/${PUBLISH_BRANCH}"; then
+            git worktree add .gh-pages "origin/${PUBLISH_BRANCH}"
+          else
+            git worktree add --detach .gh-pages
+            git -C .gh-pages switch --orphan "${PUBLISH_BRANCH}"
+            git -C .gh-pages rm -rf . >/dev/null 2>&1 || true
+          fi
+
+          rsync -a --delete --exclude='.git' public/ .gh-pages/
+
+          git -C .gh-pages add -A
+          if git -C .gh-pages diff --cached --quiet; then
+            echo "No GitHub Pages changes to publish."
+          else
+            git -C .gh-pages commit -m "Publish GitHub Pages for ${GITHUB_SHA}"
+            git -C .gh-pages push origin "HEAD:${PUBLISH_BRANCH}"
+          fi
