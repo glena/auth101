@@ -2,7 +2,7 @@
 title: OpenID Connect Deep Dive
 description: How OpenID Connect relates to OAuth 2, discovery metadata, JWKS, authorization parameters, ID Token validation, nonce, and authentication assurance.
 status: draft
-order: 5
+order: 6
 resources:
   - label: OpenID Connect Core
     url: https://openid.net/specs/openid-connect-core-1_0-errata2.html

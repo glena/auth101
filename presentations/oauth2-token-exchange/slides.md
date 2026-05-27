@@ -2,7 +2,7 @@
 title: OAuth 2 Token Exchange
 description: A focused introduction to RFC 8693 token exchange, common use cases, and the token endpoint request payload.
 status: draft
-order: 3
+order: 5
 resources:
   - label: RFC 8693
     url: https://www.rfc-editor.org/info/rfc8693

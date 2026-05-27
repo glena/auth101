@@ -2,7 +2,7 @@
 title: OAuth 2 Internals and Security
 description: Step-by-step authorization and token endpoint processing, code flow validation, error handling, cookie and state binding, and PKCE security.
 status: draft
-order: 3
+order: 4
 resources:
   - label: RFC 6749
     url: https://www.rfc-editor.org/info/rfc6749

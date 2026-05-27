@@ -2,7 +2,7 @@
 title: OAuth 2 Attack Vectors and OAuth 2.1
 description: Common OWASP and OAuth attack vectors, practical prevention, and a deep dive into OAuth 2.1 recommendations.
 status: draft
-order: 4
+order: 3
 resources:
   - label: OWASP OAuth2 Cheat Sheet
     url: https://cheatsheetseries.owasp.org/cheatsheets/OAuth2_Cheat_Sheet.html
